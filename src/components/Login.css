@@ -1,0 +1,70 @@
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #13131a;
+    font-family: sans-serif;
+    margin: -8px;
+}
+.login-card {
+    background-color: #1e1e26;
+    padding: 40px 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.login-card h2 {
+    color: #ffffff;
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+.login-card p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 20px;
+}
+.input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    background-color: #2a2b36;
+    border: 1px solid #3f4150;
+    border-radius: 8px;
+    color: #ffffff;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.2s ease;
+}
+.input::placeholder {
+    color: #64748b;
+}
+.input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: #6366f1; /* Màu xanh tím */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-submit:hover {
+    background-color: #4f46e5;
+}
+.link {
+    color: #818cf8;
+    text-decoration: none;
+    font-weight: 500;
+}
+.link:hover {
+    text-decoration: underline;
+}
