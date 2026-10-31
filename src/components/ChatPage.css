@@ -1,0 +1,110 @@
+.chat-page {
+    --bg: #0b0d17;
+    --panel: #0f111c;
+    --surface: #181b2b;
+    --line: #232640;
+    --accent: #6366f1;
+    --accent-soft: #818cf8;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+}
+
+.chat-sidebar {
+    width: 72px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+}
+
+.chat-logo {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--accent-soft);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.chat-sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-icon-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.chat-icon-btn:hover {
+    background: var(--surface);
+    color: #fff;
+}
+
+.chat-icon-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+.chat-conversations {
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    color: #64748b;
+}
+
+.chat-window {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.chat-info {
+    width: 360px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    color: #64748b;
+}
+
+@media (max-width: 1279px) {
+    .chat-info {
+        display: none;
+    }
+}
