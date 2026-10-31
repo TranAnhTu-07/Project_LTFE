@@ -1,11 +1,71 @@
+import { useState } from 'react'
 import { Plus, Search, Hash, Pin } from 'lucide-react'
+import { conversations } from '../data/mockData'
+import type { Conversation } from '../types'
+
+const tabs = ['Tất cả', 'Chưa đọc', 'Nhóm', 'Trực tiếp']
+
+function Avatar({ c }: { c: Conversation }) {
+    return (
+        <div className="conv-avatar-wrap">
+            <div className="conv-avatar">
+                {c.type === 'channel' ? <Hash size={20} /> : <span>{c.name[0]}</span>}
+            </div>
+            {c.online && <span className="conv-online" />}
+        </div>
+    )
+}
+
+function Item({
+                  c,
+                  active,
+                  onSelect,
+              }: {
+    c: Conversation
+    active: boolean
+    onSelect: () => void
+}) {
+    return (
+        <button
+            className={`conv-item ${active ? 'active' : ''}`}
+            onClick={onSelect}
+        >
+            <Avatar c={c} />
+            <div className="conv-body">
+                <div className="conv-row">
+                    <span className="conv-name">{c.name}</span>
+                    <span className="conv-time">{c.time}</span>
+                </div>
+                <div className="conv-row">
+                    <span className="conv-last">{c.lastMessage}</span>
+                    {c.unread ? <span className="conv-badge">{c.unread}</span> : null}
+                </div>
+            </div>
+        </button>
+    )
+}
 
 export default function ConversationList() {
+    const [tab, setTab] = useState('Tất cả')
+    const [keyword, setKeyword] = useState('')
+    const [activeId, setActiveId] = useState('3')
+
+    const filtered = conversations.filter((c) => {
+        if (keyword && !c.name.toLowerCase().includes(keyword.toLowerCase())) return false
+        if (tab === 'Chưa đọc') return !!c.unread
+        if (tab === 'Nhóm') return c.type === 'channel'
+        if (tab === 'Trực tiếp') return c.type === 'direct'
+        return true
+    })
+
+    const pinned = filtered.filter((c) => c.pinned)
+    const others = filtered.filter((c) => !c.pinned)
+
     return (
         <section className="chat-conversations">
             <div className="conv-header">
                 <h2>
-                    Tin nhắn <span className="conv-count">24</span>
+                    Tin nhắn <span className="conv-count">{conversations.length}</span>
                 </h2>
                 <button className="conv-add">
                     <Plus size={20} />
@@ -13,75 +73,47 @@ export default function ConversationList() {
             </div>
 
             <div className="conv-tabs">
-                <button className="conv-tab active">Tất cả</button>
-                <button className="conv-tab">Chưa đọc</button>
-                <button className="conv-tab">Nhóm</button>
-                <button className="conv-tab">Trực tiếp</button>
+                {tabs.map((t) => (
+                    <button
+                        key={t}
+                        className={`conv-tab ${tab === t ? 'active' : ''}`}
+                        onClick={() => setTab(t)}
+                    >
+                        {t}
+                    </button>
+                ))}
             </div>
 
             <div className="conv-search">
                 <Search size={16} />
-                <input placeholder="Tìm kiếm nhanh..." />
+                <input
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    placeholder="Tìm kiếm"
+                />
             </div>
 
             <div className="conv-list">
-                <div className="conv-section">
-                    <span>ĐÃ GHIM (2)</span>
-                    <Pin size={14} />
-                </div>
-
-                <button className="conv-item">
-                    <div className="conv-avatar-wrap">
-                        <div className="conv-avatar"><Hash size={20} /></div>
-                        <span className="conv-online" />
-                    </div>
-                    <div className="conv-body">
-                        <div className="conv-row">
-                            <span className="conv-name">dev-frontend</span>
-                            <span className="conv-time">10:43</span>
+                {pinned.length > 0 && (
+                    <>
+                        <div className="conv-section">
+                            <span>ĐÃ GHIM ({pinned.length})</span>
+                            <Pin size={14} />
                         </div>
-                        <div className="conv-row">
-                            <span className="conv-last">A đang soạn tin...</span>
-                        </div>
-                    </div>
-                </button>
-
-                <button className="conv-item">
-                    <div className="conv-avatar-wrap">
-                        <div className="conv-avatar"><span>A</span></div>
-                        <span className="conv-online" />
-                    </div>
-                    <div className="conv-body">
-                        <div className="conv-row">
-                            <span className="conv-name">Nguyễn Văn A</span>
-                            <span className="conv-time">09:12</span>
-                        </div>
-                        <div className="conv-row">
-                            <span className="conv-last">Ứng dụng ổn định</span>
-                        </div>
-                    </div>
-                </button>
+                        {pinned.map((c) => (
+                            <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)} />
+                        ))}
+                    </>
+                )}
 
                 <div className="conv-section">
                     <span>TẤT CẢ CUỘC HỘI THOẠI</span>
                 </div>
+                {others.map((c) => (
+                    <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)} />
+                ))}
 
-                <button className="conv-item active">
-                    <div className="conv-avatar-wrap">
-                        <div className="conv-avatar"><Hash size={20} /></div>
-                        <span className="conv-online" />
-                    </div>
-                    <div className="conv-body">
-                        <div className="conv-row">
-                            <span className="conv-name">Frontend Team Project</span>
-                            <span className="conv-time">10:42</span>
-                        </div>
-                        <div className="conv-row">
-                            <span className="conv-last">David Kim: Đang gửi tin nhắn ...</span>
-                            <span className="conv-badge">3</span>
-                        </div>
-                    </div>
-                </button>
+                {filtered.length === 0 && <p className="conv-empty">Không tìm thấy hội thoại nào</p>}
             </div>
         </section>
     )
