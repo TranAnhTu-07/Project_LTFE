@@ -73,15 +73,236 @@
     box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
 }
 
+
 .chat-conversations {
     width: 340px;
     flex-shrink: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     background: var(--panel);
     border-right: 1px solid var(--line);
+    min-height: 0;
+}
+
+.conv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 0;
+}
+
+.conv-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.conv-count {
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.conv-add {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+.conv-add:hover {
+    opacity: 0.9;
+}
+
+.conv-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px 0;
+}
+
+.conv-tab {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+}
+
+.conv-tab:hover {
+    color: #fff;
+}
+
+.conv-tab.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--accent-soft);
+}
+
+.conv-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 20px 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--surface);
     color: #64748b;
+}
+
+.conv-search input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.conv-search input::placeholder {
+    color: #64748b;
+}
+
+.conv-list {
+    flex: 1;
+    margin-top: 16px;
+    padding: 0 12px 16px;
+    overflow-y: auto;
+}
+
+.conv-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 8px 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.conv-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.conv-item:hover {
+    background: rgba(24, 27, 43, 0.6);
+}
+
+.conv-item.active {
+    background: var(--surface);
+}
+
+.conv-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.conv-avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--accent-soft);
+    font-weight: 600;
+}
+
+.conv-item.active .conv-avatar {
+    background: #222640;
+}
+
+.conv-online {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid var(--panel);
+}
+
+.conv-body {
+    min-width: 0;
+    flex: 1;
+}
+
+.conv-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.conv-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff;
+    font-weight: 500;
+}
+
+.conv-time {
+    flex-shrink: 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.conv-last {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.conv-badge {
+    flex-shrink: 0;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.conv-empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
 }
 
 .chat-window {
@@ -107,4 +328,22 @@
     .chat-info {
         display: none;
     }
+}
+
+.chat-page *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.chat-page *::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-page *::-webkit-scrollbar-thumb {
+    background: #2a2e4a;
+    border-radius: 999px;
+}
+
+.chat-page *::-webkit-scrollbar-thumb:hover {
+    background: #3b4066;
 }
