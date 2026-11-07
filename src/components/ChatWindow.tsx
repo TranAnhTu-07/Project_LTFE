@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react';
 import { Search, MoreVertical, Paperclip, Smile, Send, Image, Mic } from 'lucide-react';
 import MessageBubble, { type Message } from './MessageBubble';
+import type { Conversation } from '../types'
 
 type ChatWindowProps = {
+    conversation: Conversation | null
     onToggleInfo?: () => void;
 };
 
-export default function ChatWindow({ onToggleInfo }: ChatWindowProps) {
+export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
 
@@ -50,13 +52,26 @@ export default function ChatWindow({ onToggleInfo }: ChatWindowProps) {
         }
     };
 
+    if (!conversation) {
+        return (
+            <main className="chat-window">
+                <p className="chat-empty">Chọn một cuộc trò chuyện để bắt đầu</p>
+            </main>
+        )
+    }
+
+    const status =
+        conversation.type === 'direct'
+            ? conversation.online ? 'Đang hoạt động' : 'Ngoại tuyến'
+            : `${conversation.members?.length ?? 0} thành viên`
+
     return (
         <main className="chat-window">
             <div className="chat-window-inner">
                 <header className="chat-header">
                     <div className="chat-header-info">
-                        <h2>Alex Rivera</h2>
-                        <span className="chat-header-status">Đang hoạt động</span>
+                        <h2>{conversation.name}</h2>
+                        <span className="chat-header-status">{status}</span>
                     </div>
                     <div className="chat-header-actions">
                         <button className="chat-icon-btn-simple" title="Tìm kiếm">

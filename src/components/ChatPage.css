@@ -302,14 +302,7 @@
     font-size: 14px;
 }
 
-
-.chat-window {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-}
+/*chat ìnor*/
 .chat-info {
     width: 360px;
     flex-shrink: 0;
@@ -531,18 +524,14 @@
     border-radius: 8px;
     transition: all 0.2s;
 }
-
 .chat-icon-btn-simple:hover {
     color: #fff;
     background: var(--surface);
 }
-
 .chat-messages {
     padding: 24px;
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
     overflow-y: auto;
 }
 .messages-placeholder {
@@ -550,7 +539,6 @@
     font-style: italic;
     font-size: 14px;
 }
-
 .chat-footer {
     padding: 0 24px 24px 24px;
 }
@@ -636,6 +624,94 @@
     line-height: 24px;
     font-family: inherit;
 }
-.chat-page.panel-hidden {
-    grid-template-columns: 80px 300px 1fr;
+
+
+/*InfoPanel bổ sung*/
+.info-avatar {
+    position: relative;
+}
+.info-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+}
+.status-badge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #64748b;
+    border: 3px solid var(--panel);
+}
+.status-badge.online {
+    background: #10b981;
+}
+.info-action-btn.active {
+    color: var(--accent-soft);
+}
+.info-action-btn.danger:hover,
+.info-action-btn.danger.active {
+    color: #ef4444;
+}
+.info-notice {
+    margin: 16px 24px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    font-size: 13px;
+}
+/*Thành viên nhóm*/
+.member-avatar {
+    position: relative;
+    flex-shrink: 0;
+    background: var(--accent);
+}
+.member-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #64748b;
+    border: 2px solid var(--panel);
+}
+.member-dot.online {
+    background: #10b981;
+}
+.member-item:hover {
+    border-radius: 8px;
+    background: rgba(24, 27, 43, 0.6);
+}
+.info-footer {
+    margin-top: auto;
+    padding: 16px 24px 24px;
+}
+.info-danger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.info-danger:hover {
+    background: rgba(239, 68, 68, 0.22);
+}
+
+.chat-empty {
+    margin: auto;
+    color: var(--muted);
+    font-size: 14px;
 }

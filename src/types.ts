@@ -7,4 +7,16 @@ export type Conversation = {
     unread?: number
     pinned?: boolean
     online?: boolean
+
+    members?: Member[]
+    email?: string
+    position?: string
+    location?: string
+}
+
+export type Member = {
+    id: string
+    name: string
+    online: boolean
+    role?: 'admin' | 'member'
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Search, Hash, Pin } from 'lucide-react'
-import { conversations } from '../data/mockData'
+
 import type { Conversation } from '../types'
 import CreateRoomModal from './CreateRoomModal'
 
@@ -47,15 +47,21 @@ function Item({
     )
 }
 
-export function ConversationList() {
-    const [list, setList] = useState<Conversation[]>(conversations)
+type Props = {
+    list: Conversation[]
+    activeId: string | null
+    onSelect: (id: string) => void
+    onCreate: (room: Conversation) => void
+}
+
+
+export function ConversationList({ list, activeId, onSelect, onCreate }: Props) {
     const [tab, setTab] = useState('Tất cả')
     const [keyword, setKeyword] = useState('')
-    const [activeId, setActiveId] = useState('3')
     const [showCreate, setShowCreate] = useState(false)
 
 
-    const filtered = conversations.filter((c) => {
+    const filtered = list.filter((c) => {
         if (keyword && !c.name.toLowerCase().includes(keyword.toLowerCase())) return false
         if (tab === 'Chưa đọc') return !!c.unread
         if (tab === 'Nhóm') return c.type === 'channel'
@@ -81,10 +87,10 @@ export function ConversationList() {
             lastMessage: 'Phòng vừa được tạo',
             time,
             type: 'channel',
+            members: [{ id: 'me', name: 'Bạn', online: true, role: 'admin' }],
         }
 
-        setList((prev) => [room, ...prev])
-        setActiveId(room.id)
+        onCreate(room)
         setTab('Tất cả')
         setKeyword('')
         setShowCreate(false)
@@ -130,7 +136,7 @@ export function ConversationList() {
                             <Pin size={14}/>
                         </div>
                         {pinned.map((c) => (
-                            <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)}/>
+                            <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => onSelect(c.id)} />
                         ))}
                     </>
                 )}
@@ -139,7 +145,7 @@ export function ConversationList() {
                     <span>TẤT CẢ CUỘC HỘI THOẠI</span>
                 </div>
                 {others.map((c) => (
-                    <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)}/>
+                    <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => onSelect(c.id)} />
                 ))}
 
                 {filtered.length === 0 && <p className="conv-empty">Không tìm thấy hội thoại nào</p>}
