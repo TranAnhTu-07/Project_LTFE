@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Plus, Search, Hash, Pin } from 'lucide-react'
 import { conversations } from '../data/mockData'
 import type { Conversation } from '../types'
+import CreateRoomModal from './CreateRoomModal'
+
 
 const tabs = ['Tất cả', 'Chưa đọc', 'Nhóm', 'Trực tiếp']
 
@@ -45,10 +47,13 @@ function Item({
     )
 }
 
-export default function ConversationList() {
+export function ConversationList() {
+    const [list, setList] = useState<Conversation[]>(conversations)
     const [tab, setTab] = useState('Tất cả')
     const [keyword, setKeyword] = useState('')
     const [activeId, setActiveId] = useState('3')
+    const [showCreate, setShowCreate] = useState(false)
+
 
     const filtered = conversations.filter((c) => {
         if (keyword && !c.name.toLowerCase().includes(keyword.toLowerCase())) return false
@@ -61,14 +66,38 @@ export default function ConversationList() {
     const pinned = filtered.filter((c) => c.pinned)
     const others = filtered.filter((c) => !c.pinned)
 
+    function handleCreate(name: string) {
+        const exists = list.some(
+            (c) => c.type === 'channel' && c.name.toLowerCase() === name.toLowerCase()
+        )
+        if (exists) throw new Error('Phòng đã tồn tại')
+
+        const now = new Date()
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+        const room: Conversation = {
+            id: String(Date.now()),
+            name,
+            lastMessage: 'Phòng vừa được tạo',
+            time,
+            type: 'channel',
+        }
+
+        setList((prev) => [room, ...prev])
+        setActiveId(room.id)
+        setTab('Tất cả')
+        setKeyword('')
+        setShowCreate(false)
+    }
+
     return (
         <section className="chat-conversations">
             <div className="conv-header">
                 <h2>
-                    Tin nhắn <span className="conv-count">{conversations.length}</span>
+                    Tin nhắn <span className="conv-count">{list.length}</span>
                 </h2>
-                <button className="conv-add">
-                    <Plus size={20} />
+                <button className="conv-add" onClick={() => setShowCreate(true)}>
+                    <Plus size={20}/>
                 </button>
             </div>
 
@@ -85,7 +114,7 @@ export default function ConversationList() {
             </div>
 
             <div className="conv-search">
-                <Search size={16} />
+                <Search size={16}/>
                 <input
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
@@ -98,10 +127,10 @@ export default function ConversationList() {
                     <>
                         <div className="conv-section">
                             <span>ĐÃ GHIM ({pinned.length})</span>
-                            <Pin size={14} />
+                            <Pin size={14}/>
                         </div>
                         {pinned.map((c) => (
-                            <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)} />
+                            <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)}/>
                         ))}
                     </>
                 )}
@@ -110,11 +139,17 @@ export default function ConversationList() {
                     <span>TẤT CẢ CUỘC HỘI THOẠI</span>
                 </div>
                 {others.map((c) => (
-                    <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)} />
+                    <Item key={c.id} c={c} active={c.id === activeId} onSelect={() => setActiveId(c.id)}/>
                 ))}
 
                 {filtered.length === 0 && <p className="conv-empty">Không tìm thấy hội thoại nào</p>}
             </div>
+            {showCreate && (
+                <CreateRoomModal
+                    onClose={() => setShowCreate(false)}
+                    onSubmit={handleCreate}
+                />
+            )}
         </section>
     )
 }
