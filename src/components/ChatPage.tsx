@@ -1,6 +1,6 @@
 import './ChatPage.css'
 import Sidebar from './Sidebar'
-import ConversationList from './ConversationList'
+import {ConversationList} from './ConversationList'
 import ChatWindow from './ChatWindow'
 import InfoPanel from './InfoPanel'
 
