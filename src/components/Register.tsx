@@ -39,7 +39,7 @@ export default function Register() {
         try {
             await register(user, password);
             setSuccessMsg('Đăng ký thành công');
-            setTimeout(() => navigate('/login'), 1500);
+            setTimeout(() => navigate('/login',{ state: { username: user, password } }), 1500);
         }catch (error: any) {
             setErrorMsg(error.message);
         }finally {

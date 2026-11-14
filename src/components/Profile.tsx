@@ -1,8 +1,59 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, LogOut } from 'lucide-react'
+import { ensureLogin, logout } from '../api/auth.ts'
 import './Profile.css'
 
 export default function Profile() {
+    const navigate = useNavigate()
+
+    const username = localStorage.getItem('user') || ''
+    const storageKey = `profile_${username}`
+
+    const [displayName, setDisplayName] = useState(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')
+            return saved.displayName || username
+        } catch {
+            return username
+        }
+    })
+
+    const [bio, setBio] = useState(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')
+            return saved.bio || ''
+        } catch {
+            return ''
+        }
+    })
+
+    const [savedMsg, setSavedMsg] = useState(false)
+
+    useEffect(() => {
+        ensureLogin().catch(() => {
+            navigate('/login', { replace: true })
+        })
+    }, [navigate])
+
+    function handleSave() {
+        const cleanName = displayName.trim() || username
+        setDisplayName(cleanName)
+        localStorage.setItem(storageKey, JSON.stringify({ displayName: cleanName, bio: bio.trim() }))
+        setSavedMsg(true)
+        setTimeout(() => setSavedMsg(false), 2500)
+    }
+
+    async function handleLogout() {
+        try {
+            await logout()
+        } finally {
+            navigate('/login', { replace: true })
+        }
+    }
+
+    const avatarLetter = (displayName.trim()[0] || username[0] || '?').toUpperCase()
+
     return (
         <div className="pf-page">
             <div className="pf-container">
@@ -15,10 +66,10 @@ export default function Profile() {
                     <div className="pf-banner" />
 
                     <div className="pf-top">
-                        <div className="pf-avatar">T</div>
+                        <div className="pf-avatar">{avatarLetter}</div>
                         <div className="pf-identity">
-                            <h1>Tên</h1>
-                            <p>@Ten</p>
+                            <h1>{displayName || username}</h1>
+                            <p>@{username}</p>
                         </div>
                         <span className="pf-status">
                             <span className="pf-dot" />
@@ -26,7 +77,7 @@ export default function Profile() {
                         </span>
                     </div>
 
-                    <p className="pf-bio">Mô tả</p>
+                    <p className="pf-bio">{bio || 'Chưa có giới thiệu.'}</p>
                 </div>
 
                 <div className="pf-card pf-section">
@@ -34,7 +85,7 @@ export default function Profile() {
 
                     <div className="pf-row">
                         <span className="pf-label">Tên đăng nhập</span>
-                        <span className="pf-value">...</span>
+                        <span className="pf-value">{username}</span>
                     </div>
                     <div className="pf-row">
                         <span className="pf-label">Trạng thái</span>
@@ -51,7 +102,8 @@ export default function Profile() {
                     <input
                         id="pf-name"
                         className="pf-input"
-                        defaultValue="....."
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
                         autoComplete="off"
                     />
 
@@ -63,17 +115,25 @@ export default function Profile() {
                         className="pf-input pf-textarea"
                         rows={3}
                         placeholder="Vài dòng về bạn..."
-                        defaultValue="Mô tả ..."
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
                     />
 
                     <div className="pf-actions">
-                        <button className="pf-btn primary">Lưu thay đổi</button>
+                        {savedMsg && (
+                            <span className="pf-green" style={{ marginRight: 'auto', alignSelf: 'center', fontSize: 13 }}>
+                                Đã lưu thay đổi!
+                            </span>
+                        )}
+                        <button type="button" className="pf-btn primary" onClick={handleSave}>
+                            Lưu thay đổi
+                        </button>
                     </div>
                 </div>
 
                 <div className="pf-card pf-section">
                     <h2>Tài khoản</h2>
-                    <button className="pf-btn danger">
+                    <button type="button" className="pf-btn danger" onClick={handleLogout}>
                         <LogOut size={16} />
                         Đăng xuất
                     </button>
