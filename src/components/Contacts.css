@@ -1,0 +1,220 @@
+.ct-page {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+.ct-header {
+    box-sizing: border-box;
+    height: 72px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.ct-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.ct-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 20px 24px 24px;
+    border-radius: 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    overflow: hidden;
+}
+
+.ct-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 20px 8px;
+}
+
+.ct-search {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 40px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: #64748b;
+}
+
+.ct-search input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.ct-search input::placeholder {
+    color: #64748b;
+}
+
+.ct-select {
+    position: relative;
+    width: 190px;
+}
+
+.ct-select select {
+    box-sizing: border-box;
+    width: 100%;
+    height: 40px;
+    padding: 0 36px 0 38px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+}
+
+.ct-select select:focus,
+.ct-search:focus-within {
+    border-color: var(--accent);
+}
+
+.ct-select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.ct-select-icon,
+.ct-select-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.ct-select-icon {
+    left: 12px;
+}
+
+.ct-select-arrow {
+    right: 12px;
+}
+
+/* ===== Danh sách ===== */
+.ct-list {
+    flex: 1;
+    min-height: 0;
+    padding: 8px 12px 16px;
+    overflow-y: auto;
+}
+
+.ct-letter {
+    padding: 16px 8px 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent-soft);
+}
+
+.ct-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 8px;
+    border-radius: 12px;
+    transition: background 0.2s;
+}
+
+.ct-row:hover {
+    background: var(--surface);
+}
+
+.ct-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ct-avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.ct-avatar.c1 { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.ct-avatar.c2 { background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+.ct-avatar.c3 { background: linear-gradient(135deg, #10b981, #0ea5e9); }
+.ct-avatar.c4 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+
+.ct-online {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid var(--panel);
+}
+
+.ct-row:hover .ct-online {
+    border-color: var(--surface);
+}
+
+.ct-name {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.ct-more {
+    display: flex;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.ct-more:hover {
+    background: var(--line);
+    color: #fff;
+}
+
+@media (max-width: 640px) {
+    .ct-select {
+        flex: 1;
+        width: auto;
+    }
+}
