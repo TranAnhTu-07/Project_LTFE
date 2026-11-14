@@ -1,15 +1,25 @@
-import {Link, useNavigate} from 'react-router-dom';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import './Login.css';
-import { useState, type SyntheticEvent } from "react";
+import {useState, type SyntheticEvent, useRef, useEffect} from "react";
 import {login} from "../api/auth.ts";
 
 export default function Login() {
     const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const location = useLocation();
+    const submitBtnRef = useRef<HTMLButtonElement>(null);
+
+    const passedState = location.state as { username?: string; password?: string } | null;
+
+    const [username, setUsername] = useState(passedState?.username ??'');
+    const [password, setPassword] = useState(passedState?.password ??'');
     const[isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
+    useEffect(() => {
+        if(passedState?.username && passedState?.password) {
+            submitBtnRef.current?.focus();
+        }
+    }, [passedState]);
 
     const handleLogin = async (e: SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -38,7 +48,7 @@ export default function Login() {
                         type="password" placeholder="Mật khẩu" className="input"
                         value={password} onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading} required/>
-                    <button type="submit" className="btn-submit" disabled={isLoading}>{isLoading ? 'Đang kết nối...' : 'Vào Chat'}</button>
+                    <button ref={submitBtnRef} type="submit" className="btn-submit" disabled={isLoading}>{isLoading ? 'Đang kết nối...' : 'Vào Chat'}</button>
                 </form>
                 <p>Chưa có tài khoản? <Link to="/register" className="link">Đăng ký</Link></p>
             </div>
