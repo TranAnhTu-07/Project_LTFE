@@ -13,12 +13,11 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
     const [loading, setLoading] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    // Tự focus vào ô nhập khi mở
     useEffect(() => {
         inputRef.current?.focus()
     }, [])
 
-    // Nhấn Esc để đóng
+
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose()

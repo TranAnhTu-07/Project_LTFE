@@ -4,6 +4,7 @@ import Register from "./components/Register";
 import ChatPage from "./components/ChatPage";
 import Profile from "./components/Profile";
 import Error from "./components/Error";
+import Contacts from "./components/Contacts";
 
 export default function App() {
     return (
@@ -15,6 +16,7 @@ export default function App() {
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/error" element={<Error />} />
+                <Route path="/contacts" element={<Contacts />} />
             </Routes>
         </BrowserRouter>
 
