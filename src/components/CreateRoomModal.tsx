@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
-import './Modal.css'
+import '../styles/Modal.css'
 
 type Props = {
     onClose: () => void

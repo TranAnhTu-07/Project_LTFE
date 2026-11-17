@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, LogOut } from 'lucide-react'
 import { ensureLogin, logout } from '../api/auth.ts'
-import './Profile.css'
+import '../styles/Profile.css'
 
 export default function Profile() {
     const navigate = useNavigate()

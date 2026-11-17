@@ -1,5 +1,5 @@
 import {Link, useLocation, useNavigate} from 'react-router-dom';
-import './Login.css';
+import '../styles/Login.css';
 import {useState, type SyntheticEvent, useRef, useEffect} from "react";
 import {login} from "../api/auth.ts";
 
