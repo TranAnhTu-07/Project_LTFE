@@ -1,5 +1,5 @@
 import {Link, useNavigate} from 'react-router-dom';
-import './Login.css';
+import '../styles/Login.css';
 import { useState, type SyntheticEvent } from "react";
 import {register} from "../api/auth.ts";
 

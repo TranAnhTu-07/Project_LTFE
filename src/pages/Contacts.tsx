@@ -1,5 +1,5 @@
 import { Search, ArrowUpDown, Filter, ChevronDown, MoreHorizontal } from 'lucide-react'
-import './Contacts.css'
+import '../styles/Contacts.css'
 
 type RowProps = {
     name: string

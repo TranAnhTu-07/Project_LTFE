@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from "./components/Login";
-import Register from "./components/Register";
-import ChatPage from "./components/ChatPage";
-import Profile from "./components/Profile";
-import Error from "./components/Error";
-import Contacts from "./components/Contacts";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ChatPage from "./pages/ChatPage";
+import Profile from "./pages/Profile";
+import Error from "./pages/Error";
+import Contacts from "./pages/Contacts";
 
 export default function App() {
     return (

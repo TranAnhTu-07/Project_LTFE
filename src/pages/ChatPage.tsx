@@ -1,11 +1,11 @@
-import './ChatPage.css'
+import '../styles/ChatPage.css'
 import {useEffect, useState} from 'react'
-import Sidebar from './Sidebar'
-import { ConversationList } from './ConversationList'
-import ChatWindow from './ChatWindow'
-import InfoPanel from './InfoPanel'
-import { conversations as initialData } from '../data/mockData'
-import type { Conversation } from '../types'
+import Sidebar from '../components/Sidebar.tsx'
+import { ConversationList } from '../components/ConversationList.tsx'
+import ChatWindow from '../components/ChatWindow.tsx'
+import InfoPanel from '../components/InfoPanel.tsx'
+import { conversations as initialData } from '../data/mockData.ts'
+import type { Conversation } from '../types.ts'
 import {ensureLogin} from "../api/auth.ts";
 import {useNavigate} from "react-router-dom";
 
