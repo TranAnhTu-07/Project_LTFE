@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent, useC
 import { Search, MoreVertical, Paperclip, Smile, Send, Image, Mic, Hash, Users } from 'lucide-react';
 import MessageBubble, { type Message } from './MessageBubble';
 import type { Conversation } from '../types'
+import { useToast } from '../context/ToastContext';
 
 import { request } from '../api/socket';
 
@@ -11,6 +12,7 @@ type ChatWindowProps = {
 };
 
 export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowProps) {
+    const { showToast } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -84,11 +86,11 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
         } catch (err) {
 
             if (activeRoomRef.current === roomId) {
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : 'Không tải được tin nhắn'
-                );
+                const errorMsg = err instanceof Error
+                    ? err.message
+                    : 'Không tải được tin nhắn';
+                setError(errorMsg);
+                showToast(errorMsg, 'error');
             }
 
         } finally {
@@ -100,7 +102,7 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             }
         }
 
-    }, [conversation?.id, conversation?.name]);
+    }, [conversation?.id, conversation?.name, showToast]);
 
     //khi đổi phòng
     useEffect(() => {
@@ -204,6 +206,10 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             e.preventDefault();
             handleSend();
         }
+    };
+
+    const handleFeatureNotReady = (featureName: string) => {
+        showToast(`Tính năng ${featureName} đang được phát triển`, 'info');
     };
 
     if (!conversation) {
@@ -356,8 +362,14 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
 
                 <footer className="chat-footer">
                     <div className="chat-input-wrapper">
-                        <button className="chat-icon-btn-simple"><Paperclip size={20} /></button>
-                        <button className="chat-icon-btn-simple"><Image size={20} /></button>
+                        <button className="chat-icon-btn-simple"
+                                onClick={() => handleFeatureNotReady('đính kèm tệp')}>
+                            <Paperclip size={20} />
+                        </button>
+                        <button className="chat-icon-btn-simple" 
+                                onClick={() => handleFeatureNotReady('gửi hình ảnh')}>
+                            <Image size={20} />
+                        </button>
 
                         <textarea
                             ref={textareaRef}
@@ -368,8 +380,14 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                             className="chat-input-field textarea"
                             rows={1}
                         />
-                        <button className="chat-icon-btn-simple"><Mic size={20} /></button>
-                        <button className="chat-icon-btn-simple"><Smile size={20} /></button>
+                        <button className="chat-icon-btn-simple"
+                                onClick={() => handleFeatureNotReady('gửi tin nhắn thoại')}>
+                            <Mic size={20} />
+                        </button>
+                        <button className="chat-icon-btn-simple"
+                                onClick={() => handleFeatureNotReady('chọn biểu tượng cảm xúc')}>
+                            <Smile size={20} />
+                        </button>
                         <button className="chat-send-btn" onClick={handleSend}>
                             <span>Gửi</span>
                             <Send size={16} />
