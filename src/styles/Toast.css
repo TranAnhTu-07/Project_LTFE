@@ -1,0 +1,96 @@
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 360px;
+    width: calc(100% - 40px);
+    pointer-events: none;
+}
+
+.toast-item {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface, #1e1f26);
+    color: var(--text, #f3f4f6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--accent, #6366f1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    font-size: 13.5px;
+    line-height: 1.4;
+    animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Viền trái & màu icon theo trạng thái */
+.toast-item.info {
+    border-left-color: var(--accent, #6366f1);
+}
+.toast-icon.info {
+    color: var(--accent, #6366f1);
+}
+
+.toast-item.success {
+    border-left-color: #22c55e;
+}
+.toast-icon.success {
+    color: #22c55e;
+}
+
+.toast-item.error {
+    border-left-color: #ef4444;
+}
+.toast-icon.error {
+    color: #ef4444;
+}
+
+.toast-item.warning {
+    border-left-color: #f59e0b;
+}
+.toast-icon.warning {
+    color: #f59e0b;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+}
+
+.toast-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: var(--muted, #9ca3af);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.toast-close:hover {
+    color: var(--text, #fff);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
