@@ -1,21 +1,26 @@
-import { request, send,  getConnectionId } from './socket';
+import {onDisconnect, request, send, setAutoReconnect, setReLoginHandler} from './socket';
 
 let isAuthenticated = false;
 let ensuringPromise: Promise<boolean> | null = null;
+
+onDisconnect(() => {
+    isAuthenticated = false;
+})
 
 export const register = (user: string, pass: string) =>
     request('REGISTER', { user, pass });
 
 export async function login(user: string, pass: string) {
-    const connId = getConnectionId();
-    const res = await request('LOGIN', { user, pass, connectionId: connId });
+    const res = await request('LOGIN', { user, pass});
 
     localStorage.setItem('user', user);
     localStorage.setItem('reLoginCode', res.data.RE_LOGIN_CODE);
     isAuthenticated = true;
+    setAutoReconnect(true);
 }
 export const logout = () => {
     isAuthenticated = false;
+    setAutoReconnect(false);
     localStorage.removeItem('user');
     localStorage.removeItem('reLoginCode');
     return send('LOGOUT');
@@ -39,9 +44,11 @@ export async function ensureLogin(): Promise<boolean> {
                 localStorage.setItem('reLoginCode', res.data.RE_LOGIN_CODE);
             }
             isAuthenticated = true;
+            setAutoReconnect(true);
             return true;
         } catch (error) {
             isAuthenticated = false;
+            setAutoReconnect(false);
             localStorage.removeItem('user');
             localStorage.removeItem('reLoginCode');
             throw error;
@@ -52,3 +59,4 @@ export async function ensureLogin(): Promise<boolean> {
 
     return ensuringPromise;
 }
+setReLoginHandler(ensureLogin);

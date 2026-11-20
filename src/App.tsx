@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { onConnectionStateChange, type ConnectionState, getConnectionState } from './api/socket';
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ChatPage from "./pages/ChatPage";
@@ -7,18 +10,46 @@ import Error from "./pages/Error";
 import Contacts from "./pages/Contacts";
 
 export default function App() {
+    const [connState, setConnState] = useState<ConnectionState>(getConnectionState());
+
+    useEffect(() => {
+        const unsubscribe = onConnectionStateChange((newState) => {
+            setConnState(newState);
+        });
+        return () => {unsubscribe()};
+    }, []);
+
     return (
         <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Navigate to="/chat" />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/error" element={<Error />} />
-                <Route path="/contacts" element={<Contacts />} />
-            </Routes>
+            {connState === 'reconnecting' && (
+                <div style={{
+                    background: '#ff9800', color: 'white', padding: '8px',
+                    textAlign: 'center', position: 'fixed', top: 0, left: 0,
+                    width: '100%', zIndex: 9999, fontWeight: 'bold'
+                }}>
+                    Mất mạng! Đang tự động kết nối lại...
+                </div>
+            )}
+            {connState === 'disconnected' && localStorage.getItem('user') &&(
+                <div style={{
+                    background: '#f44336', color: 'white', padding: '8px',
+                    textAlign: 'center', position: 'fixed', top: 0, left: 0,
+                    width: '100%', zIndex: 9999, fontWeight: 'bold'
+                }}>
+                    Đã ngắt kết nối với máy chủ.
+                </div>
+            )}
+            <div style={{ paddingTop: connState !== 'connected' ? '40px' : '0', height: '100vh' }}>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/chat" />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/error" element={<Error />} />
+                    <Route path="/contacts" element={<Contacts />} />
+                </Routes>
+            </div>
         </BrowserRouter>
-
     );
 }
