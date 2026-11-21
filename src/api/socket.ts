@@ -6,7 +6,12 @@ export type ServerMsg = {
     data?: any;
     mes?: string;
 };
-
+export class ApiError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ApiError';
+    }
+}
 export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected';
 
 type Listener = (msg: ServerMsg) => void;
@@ -120,7 +125,7 @@ function sendAndWait(event: string, data?: unknown, timeout = 15000): Promise<Se
             clearTimeout(timer);
             off();
             if (msg.status === 'success') resolve(msg);
-            else reject(new Error(msg.mes ?? 'Có lỗi xảy ra'));
+            else reject(new ApiError(msg.mes ?? 'Có lỗi xảy ra'));
         });
 
         const timer = setTimeout(() => {

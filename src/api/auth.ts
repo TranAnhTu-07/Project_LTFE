@@ -1,4 +1,4 @@
-import {onDisconnect, request, send, setAutoReconnect, setReLoginHandler} from './socket';
+import {ApiError, onDisconnect, request, send, setAutoReconnect, setReLoginHandler} from './socket';
 
 let isAuthenticated = false;
 let ensuringPromise: Promise<boolean> | null = null;
@@ -47,10 +47,12 @@ export async function ensureLogin(): Promise<boolean> {
             setAutoReconnect(true);
             return true;
         } catch (error) {
-            isAuthenticated = false;
-            setAutoReconnect(false);
-            localStorage.removeItem('user');
-            localStorage.removeItem('reLoginCode');
+            if (error instanceof ApiError) {
+                isAuthenticated = false;
+                setAutoReconnect(false);
+                localStorage.removeItem('user');
+                localStorage.removeItem('reLoginCode');
+            }
             throw error;
         } finally {
             ensuringPromise = null;
