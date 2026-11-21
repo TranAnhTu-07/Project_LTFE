@@ -27,3 +27,21 @@ export interface RoomData {
 export interface CheckStatusResponse {
     status: boolean;
 }
+
+export interface Member {
+    id: string;
+    name: string;
+    online: boolean;
+    role?: 'admin' | 'member';
+}
+export interface Conversation {
+    id: string;
+    name: string;
+    type: 'channel' | 'direct';
+    actionTime: string;
+    online?: boolean;
+    members?: Member[];
+    position?: string;
+    email?: string;
+    location?: string;
+}
