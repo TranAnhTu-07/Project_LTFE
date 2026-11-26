@@ -20,7 +20,7 @@ export interface ChatMessage {
 
 export interface RoomData {
     name: string;
-    user: RoomMember[];
+    userList: RoomMember[];
     chatMess: ChatMessage[];
 }
 
@@ -37,11 +37,15 @@ export interface Member {
 export interface Conversation {
     id: string;
     name: string;
-    type: 'channel' | 'direct';
+    type: 'room' | 'direct';
     actionTime: string;
     online?: boolean;
+    pinned?: boolean;
     members?: Member[];
     position?: string;
     email?: string;
     location?: string;
+    lastMessage?: string;
+    time?: string;
+    unread?: number;
 }
