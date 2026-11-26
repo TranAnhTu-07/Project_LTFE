@@ -19,14 +19,23 @@ export const outRoom = async (name: string): Promise<{ mes: string }> => {
     return res.data;
 };
 export const getRoomMessages = async (name: string, page: number = 1): Promise<RoomData> => {
-    const res = await request('GET_ROOM_CHAT_MES', { name, page });
-    return res.data;
+    try {
+        const res = await request('GET_ROOM_CHAT_MES', { name, page });
+        return res.data;
+    } catch (err) {
+        if (err instanceof Error && err.message.includes('You not in room')) {
+            await joinRoom(name);
+            const res = await request('GET_ROOM_CHAT_MES', { name, page });
+            return res.data;
+        }
+        throw err;
+    }
 };
 export const getPeopleMessages = async (name: string, page: number = 1): Promise<ChatMessage[]> => {
     const res = await request('GET_PEOPLE_CHAT_MES', { name, page });
     return res.data;
 };
-// xử lý nhắn tin, tavsh biệt gửi và nhận
+// xử lý nhắn tin, tách biệt gửi và nhận
 //Gửi tin thẳng qua socket, k chờ phản hồi để tránh kẹt hàng đợi
 export const sendChat = async (type: 'room' | 'people', to: string, mes: string): Promise<void> => {
     await ensureLogin(); // Cực kỳ quan trọng: đảm bảo đang login trước khi send()

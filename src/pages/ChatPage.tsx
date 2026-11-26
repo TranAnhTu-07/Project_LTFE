@@ -1,61 +1,116 @@
 import '../styles/ChatPage.css'
-import {useEffect, useState} from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+
 import Sidebar from '../components/Sidebar.tsx'
 import { ConversationList } from '../components/ConversationList.tsx'
 import ChatWindow from '../components/ChatWindow.tsx'
 import InfoPanel from '../components/InfoPanel.tsx'
-import { conversations as initialData } from '../data/mockData.ts'
-import type { Conversation } from '../types.ts'
-import {ensureLogin} from "../api/auth.ts";
-import {useNavigate} from "react-router-dom";
-
+import type { ChatMessage, Conversation } from '../types.ts'
+import type { AppDispatch, RootState } from '../store'
+import {
+    setActive,
+    addConversation,
+    removeConversation,
+    appendMessage,
+} from '../store/conversationsSlice'
+import { ensureLogin } from '../api/auth.ts'
+import { createRoom, outRoom, onChatMessage, onChatError } from '../api/chat.ts'
+import { useToast } from '../context/ToastContext'
 
 export default function ChatPage() {
     const [showInfo, setShowInfo] = useState(true)
-    const [list, setList] = useState<Conversation[]>(initialData)
-    const [activeId, setActiveId] = useState<string | null>('3')
-    const navigate = useNavigate();
-    const [isAuthReady, setIsAuthReady] = useState(false);
+    const [isAuthReady, setIsAuthReady] = useState(false)
 
-    //F5
+    const navigate = useNavigate()
+    const dispatch = useDispatch<AppDispatch>()
+    const { showToast } = useToast()
+
+    const { list, activeId } = useSelector((state: RootState) => state.conversations)
+
     useEffect(() => {
+        let cancelled = false
         ensureLogin()
-            .then(() => setIsAuthReady(true))
-            .catch(() => navigate('/login', { replace: true }))
+            .then(() => {
+                if (!cancelled) setIsAuthReady(true)
+            })
+            .catch(() => {
+                if (!cancelled) navigate('/login', { replace: true })
+            })
+        return () => {
+            cancelled = true
+        }
     }, [navigate])
 
+    useEffect(() => {
+        if (!isAuthReady) return
+
+        const offMsg = onChatMessage((msg: ChatMessage) => {
+            dispatch(appendMessage(msg))
+        })
+
+        const offErr = onChatError((errMes) => {
+            showToast(errMes, 'error')
+        })
+
+        return () => {
+            offMsg()
+            offErr()
+        }
+    }, [isAuthReady, dispatch, showToast])
+
     if (!isAuthReady) {
-        return <div style={{ padding: '24px', textAlign: 'center' }}>Đang khôi phục phiên đăng nhập...</div>
+        return (
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+                Đang khôi phục phiên đăng nhập...
+            </div>
+        )
     }
 
     const active = list.find((c) => c.id === activeId) ?? null
 
-    function handleCreate(room: Conversation) {
-        setList((prev) => [room, ...prev])
-        setActiveId(room.id)
+    function handleSelectConversation(id: string) {
+        dispatch(setActive(id))
     }
 
-    function handleLeave(id: string) {
-        setList((prev) => prev.filter((c) => c.id !== id))
-        setActiveId(null)
+    async function handleCreate(room: Conversation) {
+        try {
+            await createRoom(room.name)
+            dispatch(addConversation(room))
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Tạo phòng thất bại'
+            showToast(msg, 'error')
+        }
+    }
+
+    async function handleLeave(conv: Conversation) {
+        try {
+            if (conv.type === 'room') {
+                await outRoom(conv.name)
+            }
+            dispatch(removeConversation(conv.id))
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể rời cuộc trò chuyện'
+            showToast(msg, 'error')
+        }
     }
 
     return (
         <div className={`chat-page ${!showInfo ? 'panel-hidden' : ''}`}>
             <Sidebar />
             <ConversationList
-                list={list}
                 activeId={activeId}
-                onSelect={setActiveId}
+                onSelect={handleSelectConversation}
                 onCreate={handleCreate}
             />
             <ChatWindow
-                key={active?.id}
+                key={active?.id ?? 'empty'}
                 conversation={active}
                 onToggleInfo={() => setShowInfo(!showInfo)}
             />
             {showInfo && active && (
-                <InfoPanel conversation={active} onLeave={() => handleLeave(active.id)} />
+                <InfoPanel conversation={active} onLeave={() => handleLeave(active)} />
             )}
         </div>
     )

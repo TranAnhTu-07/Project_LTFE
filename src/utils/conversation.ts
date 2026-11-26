@@ -8,7 +8,7 @@ export function toConversation(item: UserListItem): Conversation {
     return {
         id: conversationId(item.type, item.name),
         name: item.name,
-        type: item.type === 1 ? 'channel' : 'direct',
+        type: item.type === 1 ? 'room' : 'direct',
         actionTime: item.actionTime,
     }
 }
@@ -28,4 +28,12 @@ export function formatTime(actionTime: string) {
 
     const [, month, day] = date.split('-')
     return `${day}/${month}`
+}
+
+export function isRoomConversation(conv: Pick<Conversation, 'id' | 'type'>): boolean {
+    return conv.type === 'room' || conv.id.startsWith('1-')
+}
+
+export function isDirectConversation(conv: Pick<Conversation, 'id' | 'type'>): boolean {
+    return conv.type === 'direct' || conv.id.startsWith('0-')
 }

@@ -1,203 +1,225 @@
-import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent, useCallback } from 'react';
-import { Search, MoreVertical, Paperclip, Smile, Send, Image, Mic, Hash, Users } from 'lucide-react';
+import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react';
+import { Search, MoreVertical, Send, Hash, Users } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import MessageBubble, { type Message } from './MessageBubble';
-import type { Conversation } from '../types'
+import type { ChatMessage, Conversation, Member } from '../types';
+import type { AppDispatch, RootState } from '../store';
+import { appendMessage, fetchConversationMessages, setConversationMembers, setConversationMessages } from '../store/conversationsSlice';
 import { useToast } from '../context/ToastContext';
-
-import { request } from '../api/socket';
+import { sendChat, joinRoom } from '../api/chat';
+import { isRoomConversation } from '../utils/conversation';
 
 type ChatWindowProps = {
-    conversation: Conversation | null
+    conversation: Conversation | null;
     onToggleInfo?: () => void;
 };
 
+function extractRoomMembers(data: unknown): Member[] | undefined {
+    if (!data || typeof data !== 'object') return undefined;
+    const raw = data as Record<string, unknown>;
+    const list = Array.isArray(raw.userList)
+        ? raw.userList
+        : Array.isArray(raw.user)
+            ? raw.user
+            : Array.isArray(raw.users)
+                ? raw.users
+                : Array.isArray(raw.members)
+                    ? raw.members
+                    : null;
+
+    if (!list) return undefined;
+
+    return list.map((item, idx) => {
+        const u = (item ?? {}) as Record<string, unknown>;
+        return {
+            id: String(u.id ?? u._id ?? idx),
+            name: String(u.name ?? u.username ?? 'Thành viên'),
+            online: true,
+        };
+    });
+}
+
 export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowProps) {
+    const dispatch = useDispatch<AppDispatch>();
     const { showToast } = useToast();
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+
+    const { list, messagesByConv, loadingMessages, messagesError } = useSelector(
+        (state: RootState) => state.conversations
+    );
+
     const [inputValue, setInputValue] = useState('');
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const loadingRef = useRef(false);
-    const activeRoomRef = useRef(conversation?.id);
+    const liveConversation = conversation
+        ? list.find((c) => c.id === conversation.id) ?? conversation
+        : null;
 
-    const previousHeightRef = useRef(0);
-    const shouldKeepScrollRef = useRef(false);
-    const isFirstLoadRef = useRef(true);
+    const rawMessages: ChatMessage[] = liveConversation
+        ? messagesByConv[liveConversation.id] ?? []
+        : [];
 
-    const convertMessages = (data: any[]): Message[] => {
-        const currentUser = localStorage.getItem('user');
+    const currentUser = localStorage.getItem('user') ?? '';
+    const messages: Message[] = rawMessages.map((item, idx) => ({
+        id: item.id !== undefined ? String(item.id) : `${item.name}-${item.createAt ?? ''}-${idx}`,
+        name: item.name,
+        text: item.mes,
+        time: item.createAt ?? '',
+        isOwn: item.name === currentUser,
+    }));
 
-        return data.map((item) => ({
-            id: String(item.id),
-            name: item.name,
-            text: item.mes,
-            time: item.createAt,
-            isOwn: item.name === currentUser
-        }));
-    };
-
-    //tải tin nhắn
-    const loadMessages = useCallback(async (currentPage: number) => {
-
-        if (!conversation || loadingRef.current) return;
-
-        const roomId = conversation.id;
-
-        loadingRef.current = true;
-        setLoading(true);
-        setError('');
-
-        try {
-            const res = await request('CHAT_PEOPLE_GET_MES', {
-                name: conversation.name,
-                page: currentPage
-            });
-
-            // Kiểm tra người dùng còn ở phòng cũ không
-            if (activeRoomRef.current !== roomId) return;
-
-            const chatMess = res.data?.chatMess ?? [];
-            const newMessages = convertMessages(chatMess);
-
-            if (currentPage === 1) {
-                setMessages(newMessages);
-            } else {
-                setMessages(prev => {
-                    const oldIds = new Set(prev.map(m => m.id));
-
-                    const uniqueMessages = newMessages.filter(
-                        m => !oldIds.has(m.id)
-                    );
-
-                    return [...uniqueMessages, ...prev];
-                });
-            }
-
-            setPage(currentPage);
-            setHasMore(chatMess.length === 50);
-
-        } catch (err) {
-
-            if (activeRoomRef.current === roomId) {
-                const errorMsg = err instanceof Error
-                    ? err.message
-                    : 'Không tải được tin nhắn';
-                setError(errorMsg);
-                showToast(errorMsg, 'error');
-            }
-
-        } finally {
-
-            loadingRef.current = false;
-
-            if (activeRoomRef.current === roomId) {
-                setLoading(false);
-            }
-        }
-
-    }, [conversation?.id, conversation?.name, showToast]);
-
-    //khi đổi phòng
+    // console.log loại phòng khi mở và tải tin nhắn + danh sách thành viên
     useEffect(() => {
-        activeRoomRef.current = conversation?.id;
+        if (!conversation) return;
 
-        setMessages([]);
-        setPage(1);
-        setHasMore(true);
-        setError('');
-        setInputValue('');
+        let cancelled = false;
+        const roomMode = isRoomConversation(conversation);
+        console.log(
+            `[ChatWindow] Đang vào ${roomMode ? 'Phòng nhóm' : 'Chat 1-1'}:`,
+            conversation.name,
+            conversation
+        );
 
-        loadingRef.current = false;
-        shouldKeepScrollRef.current = false;
-        isFirstLoadRef.current = true;
+        const initConversation = async () => {
+            if (roomMode) {
+                try {
+                    const roomRes = await joinRoom(conversation.name);
+                    if (cancelled) return;
 
-        if (conversation) {
-            loadMessages(1);
-        } else {
-            setLoading(false);
-        }
+                    console.log('[JOIN_ROOM] response:', roomRes);
+                    const joinedMembers = extractRoomMembers(roomRes);
+                    if (joinedMembers && joinedMembers.length > 0) {
+                        dispatch(
+                            setConversationMembers({
+                                convId: conversation.id,
+                                members: joinedMembers,
+                            })
+                        );
+                    }
+                    const rawObj = (roomRes ?? {}) as Record<string, unknown>
+                    const joinedChatData = Array.isArray(rawObj.chatData)
+                        ? (rawObj.chatData as ChatMessage[])
+                        : Array.isArray(rawObj.chatMess)
+                            ? (rawObj.chatMess as ChatMessage[])
+                            : []
 
-    }, [conversation?.id, loadMessages]);
+                    if (joinedChatData.length > 0) {
+                        const sorted = [...joinedChatData].sort((a, b) => {
+                            const ta = a.createAt ? Date.parse(a.createAt.replace(' ', 'T')) : 0
+                            const tb = b.createAt ? Date.parse(b.createAt.replace(' ', 'T')) : 0
+                            return (Number.isNaN(ta) ? 0 : ta) - (Number.isNaN(tb) ? 0 : tb)
+                        })
+                        dispatch(
+                            setConversationMessages({
+                                convId: conversation.id,
+                                messages: sorted,
+                            })
+                        )
+                    }
+                } catch (err) {
+                    if (cancelled) return;
+                    const msg = err instanceof Error ? err.message : 'Không thể vào phòng';
+                    showToast(msg, 'error');
+                    if (msg.includes('Room not found')) {
+                        return;
+                    }
+                }
+            }
 
-    useEffect(() => {
+            if (cancelled) return;
 
-        const container = messagesRef.current;
-
-        if (!container || loading) return;
-
-        if (shouldKeepScrollRef.current) {
-
-            const newHeight = container.scrollHeight;
-
-            container.scrollTop +=
-                newHeight - previousHeightRef.current;
-
-            shouldKeepScrollRef.current = false;
-
-        } else if (isFirstLoadRef.current && messages.length > 0) {
-
-            messagesEndRef.current?.scrollIntoView({
-                behavior: 'auto'
-            });
-
-            isFirstLoadRef.current = false;
-        }
-
-    }, [messages, loading]);
-
-    const handleLoadMore = () => {
-
-        if (!hasMore || loading || !messagesRef.current) return;
-
-        previousHeightRef.current = messagesRef.current.scrollHeight;
-
-        shouldKeepScrollRef.current = true;
-
-        loadMessages(page + 1);
-    };
-
-    const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-
-        setInputValue(e.target.value);
-
-        if (textareaRef.current) {
-            textareaRef.current.style.height = '24px';
-
-            textareaRef.current.style.height =
-                `${textareaRef.current.scrollHeight}px`;
-        }
-
-    };
-
-    const handleSend = () => {
-
-        if (!inputValue.trim()) return;
-
-        const currentUser = localStorage.getItem('user') ?? '';
-
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            name: currentUser,
-            text: inputValue.trim(),
-            time: new Date().toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
-            isOwn: true
+            try {
+                await dispatch(
+                    fetchConversationMessages({
+                        convId: conversation.id,
+                        type: roomMode ? 'room' : 'direct',
+                        name: conversation.name,
+                    })
+                ).unwrap();
+            } catch (err) {
+                if (cancelled) return;
+                const msg = typeof err === 'string' ? err : 'Không tải được tin nhắn';
+                showToast(msg, 'error');
+            }
         };
 
-        setMessages(prev => [...prev, newMessage]);
-        setInputValue('');
+        initConversation();
 
+        return () => {
+            cancelled = true;
+        };
+    }, [conversation?.id, conversation?.type, conversation?.name, dispatch, showToast]);
+
+    // Cuộn xuống cuối khi tải xong hoặc khi có tin nhắn mới trong cuộc trò chuyện hiện tại
+    useEffect(() => {
+        if (!loadingMessages && messages.length > 0) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [liveConversation?.id, loadingMessages, messages.length]);
+
+    const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        setInputValue(e.target.value);
         if (textareaRef.current) {
             textareaRef.current.style.height = '24px';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    };
+
+    const handleSend = async () => {
+        const content = inputValue.trim();
+        if (!content || !liveConversation) return;
+
+        const roomMode = isRoomConversation(liveConversation);
+        const chatType: 'room' | 'people' = roomMode ? 'room' : 'people';
+        const senderName = localStorage.getItem('user') ?? 'Bạn';
+
+        setInputValue('');
+        if (textareaRef.current) {
+            textareaRef.current.style.height = '24px';
+        }
+
+        try {
+            await sendChat(chatType, liveConversation.name, content);
+
+            const nowStr = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const optimisticMsg: ChatMessage = {
+                name: senderName,
+                type: roomMode ? 1 : 0,
+                to: liveConversation.name,
+                mes: content,
+                createAt: nowStr,
+            };
+
+            dispatch(appendMessage(optimisticMsg));
+            requestAnimationFrame(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            });
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Gửi tin nhắn thất bại';
+            if (roomMode && errorMsg.includes('You not in room')) {
+                try {
+                    await joinRoom(liveConversation.name);
+                    await sendChat('room', liveConversation.name, content);
+                    dispatch(
+                        appendMessage({
+                            id: -Date.now(),
+                            name: senderName,
+                            type: 1,
+                            to: liveConversation.name,
+                            mes: content,
+                            createAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                        })
+                    );
+                    return;
+                } catch (retryErr) {
+                    const retryMsg = retryErr instanceof Error ? retryErr.message : 'Gửi tin nhắn thất bại';
+                    showToast(retryMsg, 'error');
+                    return;
+                }
+            }
+            showToast(errorMsg, 'error');
         }
     };
 
@@ -212,38 +234,31 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
         showToast(`Tính năng ${featureName} đang được phát triển`, 'info');
     };
 
-    if (!conversation) {
+    if (!liveConversation) {
         return (
             <main className="chat-window">
                 <p className="chat-empty">Chọn một cuộc trò chuyện để bắt đầu</p>
             </main>
-        )
+        );
     }
 
-    const members = conversation.members ?? [];
-
-    const status =
-        conversation.type === 'direct'
-            ? conversation.online ? 'Đang hoạt động' : 'Ngoại tuyến'
-            : `${members.length} thành viên`
-
-            // Avatar thành viên trong phòng
+    const roomMode = isRoomConversation(liveConversation);
+    const members = liveConversation.members ?? [];
+    const status = roomMode
+        ? `${members.length} thành viên`
+        : liveConversation.online
+            ? 'Đang hoạt động'
+            : 'Ngoại tuyến';
     const displayMembers = members.slice(0, 3);
 
-    // Hiển thị màn hình chào khi chưa có tin nhắn
     const renderEmptyChat = () => {
-
-        if (conversation.type === 'channel') {
+        if (roomMode) {
             return (
                 <div className="chat-welcome">
-
                     <div className="welcome-avatars">
                         {displayMembers.length > 0 ? (
-                            displayMembers.map(member => (
-                                <div
-                                    className="welcome-avatar"
-                                    key={member.id}
-                                >
+                            displayMembers.map((member) => (
+                                <div className="welcome-avatar" key={member.id}>
                                     <img
                                         src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=6366f1&color=fff&size=100`}
                                         alt={member.name}
@@ -256,39 +271,26 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                             </div>
                         )}
                     </div>
-
-                    <h2>{conversation.name}</h2>
-
+                    <h2>{liveConversation.name}</h2>
                     <div className="welcome-member-count">
                         <Users size={16} />
-                        <span>
-                            Tổng cộng {members.length} thành viên
-                        </span>
+                        <span>Tổng cộng {members.length} thành viên</span>
                     </div>
-
-                    <p>
-                        Đây là điểm bắt đầu của cuộc trò chuyện.
-                    </p>
-
+                    <p>Đây là điểm bắt đầu của cuộc trò chuyện.</p>
                 </div>
             );
         }
+
         return (
             <div className="chat-welcome">
-
                 <div className="welcome-default-avatar">
                     <img
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.name)}&background=6366f1&color=fff&size=100`}
-                        alt={conversation.name}
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(liveConversation.name)}&background=6366f1&color=fff&size=100`}
+                        alt={liveConversation.name}
                     />
                 </div>
-
-                <h2>{conversation.name}</h2>
-
-                <p>
-                    Hãy bắt đầu cuộc trò chuyện.
-                </p>
-
+                <h2>{liveConversation.name}</h2>
+                <p>Hãy bắt đầu cuộc trò chuyện.</p>
             </div>
         );
     };
@@ -298,7 +300,7 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             <div className="chat-window-inner">
                 <header className="chat-header">
                     <div className="chat-header-info">
-                        <h2>{conversation.name}</h2>
+                        <h2>{liveConversation.name}</h2>
                         <span className="chat-header-status">{status}</span>
                     </div>
                     <div className="chat-header-actions">
@@ -316,45 +318,19 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                 </header>
 
                 <div className="chat-messages" ref={messagesRef} style={{ display: 'block' }}>
-                    {loading && messages.length === 0 && (
+                    {loadingMessages && messages.length === 0 && (
                         <div className="chat-loading">
                             <div className="loading-spinner" />
                             <p>Đang tải tin nhắn...</p>
                         </div>
                     )}
 
-                    {error && (
-                        <p className="chat-error">
-                            {error}
-                        </p>
-                    )}
+                    {messagesError && <p className="chat-error">{messagesError}</p>}
 
-                    {!loading && !error && messages.length === 0 && (
-                        renderEmptyChat()
-                    )}
-                    
-                    {messages.length > 0 && hasMore && (
-                        <button
-                        className="load-more-btn"
-                        onClick={handleLoadMore}
-                        disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <span className="loading-spinner small" />
-                                    Đang tải tin cũ...
-                                </>
-                            ) : (
-                                'Tải thêm tin cũ'
-                            )}
-                        </button>
-                    )}
+                    {!loadingMessages && !messagesError && messages.length === 0 && renderEmptyChat()}
 
-                    {messages.map(msg => (
-                        <MessageBubble
-                            key={msg.id}
-                            message={msg}
-                        />
+                    {messages.map((msg) => (
+                        <MessageBubble key={msg.id} message={msg} />
                     ))}
 
                     <div ref={messagesEndRef} />
@@ -362,15 +338,6 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
 
                 <footer className="chat-footer">
                     <div className="chat-input-wrapper">
-                        <button className="chat-icon-btn-simple"
-                                onClick={() => handleFeatureNotReady('đính kèm tệp')}>
-                            <Paperclip size={20} />
-                        </button>
-                        <button className="chat-icon-btn-simple" 
-                                onClick={() => handleFeatureNotReady('gửi hình ảnh')}>
-                            <Image size={20} />
-                        </button>
-
                         <textarea
                             ref={textareaRef}
                             value={inputValue}
@@ -380,14 +347,6 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                             className="chat-input-field textarea"
                             rows={1}
                         />
-                        <button className="chat-icon-btn-simple"
-                                onClick={() => handleFeatureNotReady('gửi tin nhắn thoại')}>
-                            <Mic size={20} />
-                        </button>
-                        <button className="chat-icon-btn-simple"
-                                onClick={() => handleFeatureNotReady('chọn biểu tượng cảm xúc')}>
-                            <Smile size={20} />
-                        </button>
                         <button className="chat-send-btn" onClick={handleSend}>
                             <span>Gửi</span>
                             <Send size={16} />
