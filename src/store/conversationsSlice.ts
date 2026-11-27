@@ -119,7 +119,7 @@ const slice = createSlice({
 
             if (!isExactDuplicate) {
                 const localIdx =
-                    typeof msg.id === 'number' && msg.id > 0
+                    msg.id === undefined || msg.id > 0
                         ? currentList.findIndex(
                               (m) =>
                                   typeof m.id === 'number' &&
@@ -131,7 +131,7 @@ const slice = createSlice({
                         : -1
 
                 if (localIdx !== -1) {
-                    currentList[localIdx] = msg
+                    currentList[localIdx] = { ...msg, createAt: msg.createAt ?? currentList[localIdx].createAt }
                 } else {
                     currentList.push(msg)
                 }

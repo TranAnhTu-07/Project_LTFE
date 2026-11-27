@@ -18,8 +18,9 @@ import {
     appendMessage,
 } from '../store/conversationsSlice'
 import { ensureLogin } from '../api/auth.ts'
-import { createRoom, outRoom, onChatMessage, onChatError } from '../api/chat.ts'
+import {  outRoom, onChatMessage, onChatError } from '../api/chat.ts'
 import { useToast } from '../context/ToastContext'
+import {nowActionTime} from "../utils/conversation.ts";
 
 export default function ChatPage() {
     const [showInfo, setShowInfo] = useState(true)
@@ -50,7 +51,7 @@ export default function ChatPage() {
         if (!isAuthReady) return
 
         const offMsg = onChatMessage((msg: ChatMessage) => {
-            dispatch(appendMessage(msg))
+            dispatch(appendMessage({ ...msg, createAt: msg.createAt ?? nowActionTime() }))
         })
 
         const offErr = onChatError((errMes) => {
@@ -77,10 +78,10 @@ export default function ChatPage() {
         dispatch(setActive(id))
     }
 
-    async function handleCreate(room: Conversation) {
+    async function handleCreate(conv: Conversation) {
         try {
-            await createRoom(room.name)
-            dispatch(addConversation(room))
+            // await createRoom(room.name)
+            dispatch(addConversation(conv))
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Tạo phòng thất bại'
             showToast(msg, 'error')

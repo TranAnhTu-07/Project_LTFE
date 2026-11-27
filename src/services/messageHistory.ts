@@ -34,9 +34,9 @@ export async function fetchAllMessages(
                     ? roomData.chatMess
                     : []
             batch = rawBatch
-
-            if (page === 1 && Array.isArray(roomData?.userList)) {
-                members = roomData.userList.map((u, idx) => ({
+            const rawUsers = roomData?.userList ?? roomData?.user
+            if (page === 1 && Array.isArray(rawUsers)) {
+                members = rawUsers.map((u, idx) => ({
                     id: String(u.id ?? idx),
                     name: String(u.name ?? 'Thành viên'),
                     online: true,

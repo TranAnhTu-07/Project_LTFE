@@ -16,8 +16,12 @@ export default function App() {
         const unsubscribe = onConnectionStateChange((newState) => {
             setConnState(newState);
         });
-        return () => {unsubscribe()};
+        return () => { unsubscribe() };
     }, []);
+
+    const isLoggedIn = Boolean(localStorage.getItem('user'));
+    const showDisconnectedBanner = connState === 'disconnected' && isLoggedIn;
+    const showBanner = connState === 'reconnecting' || showDisconnectedBanner;
 
     return (
         <ToastProvider>
@@ -31,7 +35,7 @@ export default function App() {
                         Mất mạng! Đang tự động kết nối lại...
                     </div>
                 )}
-                {connState === 'disconnected' && localStorage.getItem('user') &&(
+                {showDisconnectedBanner && (
                     <div style={{
                         background: '#f44336', color: 'white', padding: '8px',
                         textAlign: 'center', position: 'fixed', top: 0, left: 0,
@@ -40,7 +44,11 @@ export default function App() {
                         Đã ngắt kết nối với máy chủ.
                     </div>
                 )}
-                <div style={{ paddingTop: connState !== 'connected' ? '40px' : '0', height: '100vh' }}>
+                <div style={{
+                    paddingTop: showBanner ? '40px' : '0',
+                    height: '100vh',
+                    boxSizing: 'border-box'
+                }}>
                     <Routes>
                         <Route path="/" element={<Navigate to="/chat" />} />
                         <Route path="/login" element={<Login />} />
