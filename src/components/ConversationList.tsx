@@ -7,6 +7,7 @@ import type { AppDispatch, RootState } from '../store'
 import { fetchConversations } from '../store/conversationsSlice'
 import { conversationId, formatTime, nowActionTime } from '../utils/conversation'
 import CreateRoomModal from './CreateRoomModal'
+import { createRoom, checkExist } from '../api/chat'
 
 const tabs = ['Tất cả', 'Chưa đọc', 'Nhóm', 'Trực tiếp']
 
@@ -85,29 +86,48 @@ export function ConversationList({ activeId, onSelect, onCreate }: Props) {
     const pinned = filtered.filter((c) => c.pinned)
     const others = filtered.filter((c) => !c.pinned)
 
-    function handleCreate(name: string) {
-        const exists = conversations.some(
-            (c) => c.type === 'room' && c.name.toLowerCase() === name.toLowerCase()
-        )
-        if (exists) throw new Error('Phòng đã tồn tại')
-
-        const actionTime = nowActionTime()
-        const room: Conversation = {
-            id: conversationId(1, name),
-            name,
-            actionTime,
-            time: formatTime(actionTime),
-            lastMessage: 'Phòng vừa được tạo',
-            type: 'room',
-            members: [{ id: 'me', name: 'Bạn', online: true, role: 'admin' }],
+    async function handleCreate(name: string, isRoom: boolean) {
+        if (isRoom) {
+            await createRoom(name)
+        } else {
+            if (name === localStorage.getItem('user')) {
+                throw new Error('Bạn không thể nhắn tin cho chính mình')
+            }
+            const res = await checkExist(name)
+            if (!res.status) {
+                throw new Error('Tài khoản không tồn tại')
+            }
         }
 
-        onCreate(room)
+        const actionTime = nowActionTime()
+        let conv: Conversation
+
+        if (isRoom) {
+            conv = {
+                id: conversationId(1, name),
+                name,
+                actionTime,
+                time: formatTime(actionTime),
+                lastMessage: 'Phòng vừa được tạo',
+                type: 'room',
+                members: [{ id: 'me', name: 'Bạn', online: true, role: 'admin' }],
+            }
+        } else {
+            conv = {
+                id: conversationId(0, name),
+                name,
+                actionTime,
+                time: formatTime(actionTime),
+                lastMessage: 'Bắt đầu trò chuyện',
+                type: 'direct',
+            }
+        }
+
+        onCreate(conv)
         setTab('Tất cả')
         setKeyword('')
         setShowCreate(false)
     }
-
     return (
         <section className="chat-conversations">
             <div className="conv-header">
