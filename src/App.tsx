@@ -7,7 +7,6 @@ import Register from "./pages/Register";
 import ChatPage from "./pages/ChatPage";
 import Profile from "./pages/Profile";
 import Error from "./pages/Error";
-import Contacts from "./pages/Contacts";
 import { ToastProvider } from './context/ToastContext';
 
 export default function App() {
@@ -49,7 +48,6 @@ export default function App() {
                         <Route path="/chat" element={<ChatPage />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/error" element={<Error />} />
-                        <Route path="/contacts" element={<Contacts />} />
                     </Routes>
                 </div>
             </BrowserRouter>

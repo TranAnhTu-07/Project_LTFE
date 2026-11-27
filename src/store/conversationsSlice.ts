@@ -3,6 +3,7 @@ import type { Conversation, ChatMessage, UserListItem, Member } from '../types.t
 import { getUserList } from '../api/chat.ts'
 import { fetchAllMessages } from '../services/messageHistory.ts'
 import { conversationId, formatTime, nowActionTime, toConversation } from '../utils/conversation.ts'
+import type { RootState } from './index.ts'
 
 type State = {
     list: Conversation[]
@@ -236,3 +237,5 @@ const slice = createSlice({
 
 export const { setActive, addConversation, removeConversation, appendMessage, setConversationMembers, setConversationMessages } = slice.actions
 export default slice.reducer
+export const selectActive = (s: RootState) =>
+    s.conversations.list.find((c) => c.id === s.conversations.activeId) ?? null
