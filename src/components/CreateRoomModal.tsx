@@ -4,7 +4,7 @@ import '../styles/Modal.css'
 
 type Props = {
     onClose: () => void
-    onSubmit: (name: string) => Promise<void> | void
+    onSubmit: (name: string,isRoom: boolean) => Promise<void> | void
 }
 
 export default function CreateRoomModal({ onClose, onSubmit }: Props) {
@@ -12,6 +12,7 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+    const [isRoom, setIsRoom] = useState(false)
 
     useEffect(() => {
         inputRef.current?.focus()
@@ -31,20 +32,24 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
         const value = name.trim()
 
         if (!value) {
-            setError('Vui lòng nhập tên phòng')
+            setError(isRoom ? 'Vui lòng nhập tên phòng' : 'Vui lòng nhập tên người nhận')
             return
         }
         if (value.length > 30) {
             setError('Tên phòng tối đa 30 ký tự')
             return
         }
+        if (!isRoom && !/^[a-zA-Z0-9_]+$/.test(value)) {
+            setError('Tên đăng nhập chỉ gồm chữ không dấu, số và dấu gạch dưới')
+            return
+        }
 
         setLoading(true)
         setError('')
         try {
-            await onSubmit(value)
+            await onSubmit(value, isRoom)
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+            setError(err instanceof Error ? err.message : 'Lỗi')
             setLoading(false)
         }
     }
@@ -58,18 +63,14 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
         >
             <form className="modal-box" onSubmit={handleSubmit}>
                 <div className="modal-header">
-                    <h3>Tạo phòng chat</h3>
+                    <h3>Cuộc trò chuyện mới</h3>
                     <button type="button" className="modal-close" onClick={onClose}>
-                        <X size={18} />
+                        <X size={18}/>
                     </button>
                 </div>
 
-                <p className="modal-desc">
-                    Bạn sẽ là chủ phòng và là thành viên đầu tiên của phòng.
-                </p>
-
                 <label className="modal-label" htmlFor="room-name">
-                    Tên phòng
+                    {isRoom ? 'Tên phòng' : 'Tên người nhận'}
                 </label>
                 <input
                     id="room-name"
@@ -79,18 +80,30 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
                     onChange={(e) => {
                         setName(e.target.value)
                         setError('')
-                    }}
-                    placeholder="Ví dụ: LTFE"
-                    disabled={loading}
+                    }
+                }
                 />
                 {error && <p className="modal-error">{error}</p>}
+
+                <label className="modal-check">
+                    <input
+                        type="checkbox"
+                        checked={isRoom}
+                        onChange={(e) => {
+                            setIsRoom(e.target.checked)
+                            setError('')
+                        }}
+                        disabled={loading}
+                    />
+                    <span>Phòng chat</span>
+                </label>
 
                 <div className="modal-actions">
                     <button type="button" className="modal-btn ghost" onClick={onClose}>
                         Hủy
                     </button>
                     <button type="submit" className="modal-btn primary" disabled={loading}>
-                        {loading ? 'Đang tạo...' : 'Tạo phòng'}
+                        {loading ? 'Đang xử lý...' : isRoom ? 'Tạo phòng' : 'Nhắn tin'}
                     </button>
                 </div>
             </form>
