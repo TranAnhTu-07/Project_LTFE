@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
-import Sidebar from '../components/Sidebar.tsx'
 import { ConversationList } from '../components/ConversationList.tsx'
 import ChatWindow from '../components/ChatWindow.tsx'
 import InfoPanel from '../components/InfoPanel.tsx'
 import type { ChatMessage, Conversation } from '../types.ts'
 import type { AppDispatch, RootState } from '../store'
+import Sidebar, { type SidebarView } from '../components/Sidebar.tsx'
+import Contacts from './Contacts.tsx'
+
 import {
     setActive,
     addConversation,
@@ -26,6 +28,7 @@ export default function ChatPage() {
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
     const { showToast } = useToast()
+    const [view, setView] = useState<SidebarView>('chat')
 
     const { list, activeId } = useSelector((state: RootState) => state.conversations)
 
@@ -98,19 +101,31 @@ export default function ChatPage() {
 
     return (
         <div className={`chat-page ${!showInfo ? 'panel-hidden' : ''}`}>
-            <Sidebar />
-            <ConversationList
-                activeId={activeId}
-                onSelect={handleSelectConversation}
-                onCreate={handleCreate}
-            />
-            <ChatWindow
-                key={active?.id ?? 'empty'}
-                conversation={active}
-                onToggleInfo={() => setShowInfo(!showInfo)}
-            />
-            {showInfo && active && (
-                <InfoPanel conversation={active} onLeave={() => handleLeave(active)} />
+            <Sidebar view={view} onChange={setView} />
+
+            {view === 'chat' ? (
+                <>
+                    <ConversationList
+                        activeId={activeId}
+                        onSelect={handleSelectConversation}
+                        onCreate={handleCreate}
+                    />
+                    <ChatWindow
+                        key={active?.id ?? 'empty'}
+                        conversation={active}
+                        onToggleInfo={() => setShowInfo(!showInfo)}
+                    />
+                    {showInfo && active && (
+                        <InfoPanel conversation={active} onLeave={() => handleLeave(active)} />
+                    )}
+                </>
+            ) : (
+                <Contacts
+                    onOpen={(id) => {
+                        handleSelectConversation(id)
+                        setView('chat')
+                    }}
+                />
             )}
         </div>
     )
