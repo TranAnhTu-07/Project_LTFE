@@ -7,7 +7,7 @@ import type { AppDispatch, RootState } from '../store';
 import { appendMessage, fetchConversationMessages, setConversationMembers, setConversationMessages } from '../store/conversationsSlice';
 import { useToast } from '../context/ToastContext';
 import { sendChat, joinRoom } from '../api/chat';
-import { isRoomConversation } from '../utils/conversation';
+import {isRoomConversation, nowActionTime} from '../utils/conversation';
 
 type ChatWindowProps = {
     conversation: Conversation | null;
@@ -182,46 +182,49 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
 
         try {
             await sendChat(chatType, liveConversation.name, content);
-
-            const nowStr = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            // const nowStr = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const optimisticMsg: ChatMessage = {
+                id: -Date.now(),
                 name: senderName,
                 type: roomMode ? 1 : 0,
                 to: liveConversation.name,
                 mes: content,
-                createAt: nowStr,
+                createAt: nowActionTime(),
             };
 
             dispatch(appendMessage(optimisticMsg));
             requestAnimationFrame(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
             });
         } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'Gửi tin nhắn thất bại';
-            if (roomMode && errorMsg.includes('You not in room')) {
-                try {
-                    await joinRoom(liveConversation.name);
-                    await sendChat('room', liveConversation.name, content);
-                    dispatch(
-                        appendMessage({
-                            id: -Date.now(),
-                            name: senderName,
-                            type: 1,
-                            to: liveConversation.name,
-                            mes: content,
-                            createAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-                        })
-                    );
-                    return;
-                } catch (retryErr) {
-                    const retryMsg = retryErr instanceof Error ? retryErr.message : 'Gửi tin nhắn thất bại';
-                    showToast(retryMsg, 'error');
-                    return;
-                }
-            }
-            showToast(errorMsg, 'error');
+            showToast(err instanceof Error ? err.message : 'Gửi tin nhắn thất bại', 'error');
         }
     };
+    //     } catch (err) {
+    //         const errorMsg = err instanceof Error ? err.message : 'Gửi tin nhắn thất bại';
+    //         if (roomMode && errorMsg.includes('You not in room')) {
+    //             try {
+    //                 await joinRoom(liveConversation.name);
+    //                 await sendChat('room', liveConversation.name, content);
+    //                 dispatch(
+    //                     appendMessage({
+    //                         id: -Date.now(),
+    //                         name: senderName,
+    //                         type: 1,
+    //                         to: liveConversation.name,
+    //                         mes: content,
+    //                         createAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    //                     })
+    //                 );
+    //                 return;
+    //             } catch (retryErr) {
+    //                 const retryMsg = retryErr instanceof Error ? retryErr.message : 'Gửi tin nhắn thất bại';
+    //                 showToast(retryMsg, 'error');
+    //                 return;
+    //             }
+    //         }
+    //         showToast(errorMsg, 'error');
+    //     }
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -230,9 +233,9 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
         }
     };
 
-    const handleFeatureNotReady = (featureName: string) => {
-        showToast(`Tính năng ${featureName} đang được phát triển`, 'info');
-    };
+    // const handleFeatureNotReady = (featureName: string) => {
+    //     showToast(`Tính năng ${featureName} đang được phát triển`, 'info');
+    // };
 
     if (!liveConversation) {
         return (

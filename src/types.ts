@@ -19,9 +19,14 @@ export interface ChatMessage {
 }
 
 export interface RoomData {
+    id?: number;
     name: string;
-    userList: RoomMember[];
-    chatMess: ChatMessage[];
+    own?: string;
+    createTime?: string;
+    userList?: RoomMember[];
+    user?: RoomMember[]; //tên dự phòng theo API
+    chatData?: ChatMessage[];
+    chatMess?: ChatMessage[];   // tên dự phongf theo API
 }
 
 export interface CheckStatusResponse {

@@ -24,7 +24,7 @@ export default function Register() {
             return;
         }
         if(user.length <3 || user.length > 15) {
-            setErrorMsg('Tên đăng nhập phải từ 3 đến 20 ký tự');
+            setErrorMsg('Tên đăng nhập phải từ 3 đến 15 ký tự');
             return;
         }
         if(password.length < 6) {
