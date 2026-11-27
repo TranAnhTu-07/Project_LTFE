@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react';
-import { Search, MoreVertical, Send, Hash, Users } from 'lucide-react';
+import { Search, MoreVertical, Send, Hash, Users, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import MessageBubble, { type Message } from './MessageBubble';
 import type { ChatMessage, Conversation, Member } from '../types';
@@ -69,6 +69,69 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
         time: item.createAt ?? '',
         isOwn: item.name === currentUser,
     }));
+
+    // xử lý tìm tin nhắn
+    const [showSearch, setShowSearch] = useState(false); 
+    const [searchQuery, setSearchQuery] = useState(''); 
+    const [matchIndex, setMatchIndex] = useState(0); 
+    const searchInputRef = useRef<HTMLInputElement>(null); 
+
+    // lọc tin nhắn
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const matchedMessages = normalizedQuery
+        ? messages.filter(
+            (m) =>
+                m.text.toLowerCase().includes(normalizedQuery) || 
+                m.name.toLowerCase().includes(normalizedQuery)    
+        )
+        : [];
+
+    // 3. Xác định tin nhắn khớp hiện tại đang được trỏ tới (dùng % để xoay vòng từ cuối về đầu và ngược lại)
+    const activeMatch =
+        matchedMessages.length > 0
+            ? matchedMessages[matchIndex % matchedMessages.length]
+            : null;
+
+    useEffect(() => {
+        setShowSearch(false);
+        setSearchQuery('');
+        setMatchIndex(0);
+    }, [conversation?.id]);
+
+    useEffect(() => {
+        if (showSearch) {
+            searchInputRef.current?.focus();
+        }
+    }, [showSearch]);
+
+    // tự động cuộn tới vị trí tin nhắn khi tìm thấy
+    useEffect(() => {
+        if (!activeMatch || !messagesRef.current) return;
+        const escapedId = activeMatch.id.replace(/"/g, '\\"');
+        const targetEl = messagesRef.current.querySelector<HTMLElement>(
+            `[data-msg-id="${escapedId}"]`
+        );
+        // Cuộn mượt đưa tin nhắn đó vào giữa vùng hiển thị
+        targetEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [activeMatch]);
+
+    const handleToggleSearch = () => {
+        setShowSearch((prev) => {
+            const next = !prev;
+            if (!next) {
+                setSearchQuery('');
+                setMatchIndex(0);
+            }
+            return next;
+        });
+    };
+
+    const handleStepMatch = (delta: number) => {
+        if (matchedMessages.length === 0) return;
+        setMatchIndex(
+            (prev) => (prev + delta + matchedMessages.length) % matchedMessages.length
+        );
+    };
 
     // console.log loại phòng khi mở và tải tin nhắn + danh sách thành viên
     useEffect(() => {
@@ -200,31 +263,6 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             showToast(err instanceof Error ? err.message : 'Gửi tin nhắn thất bại', 'error');
         }
     };
-    //     } catch (err) {
-    //         const errorMsg = err instanceof Error ? err.message : 'Gửi tin nhắn thất bại';
-    //         if (roomMode && errorMsg.includes('You not in room')) {
-    //             try {
-    //                 await joinRoom(liveConversation.name);
-    //                 await sendChat('room', liveConversation.name, content);
-    //                 dispatch(
-    //                     appendMessage({
-    //                         id: -Date.now(),
-    //                         name: senderName,
-    //                         type: 1,
-    //                         to: liveConversation.name,
-    //                         mes: content,
-    //                         createAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    //                     })
-    //                 );
-    //                 return;
-    //             } catch (retryErr) {
-    //                 const retryMsg = retryErr instanceof Error ? retryErr.message : 'Gửi tin nhắn thất bại';
-    //                 showToast(retryMsg, 'error');
-    //                 return;
-    //             }
-    //         }
-    //         showToast(errorMsg, 'error');
-    //     }
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -232,10 +270,6 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             handleSend();
         }
     };
-
-    // const handleFeatureNotReady = (featureName: string) => {
-    //     showToast(`Tính năng ${featureName} đang được phát triển`, 'info');
-    // };
 
     if (!liveConversation) {
         return (
@@ -307,7 +341,11 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                         <span className="chat-header-status">{status}</span>
                     </div>
                     <div className="chat-header-actions">
-                        <button className="chat-icon-btn-simple" title="Tìm kiếm">
+                        <button
+                            className={`chat-icon-btn-simple ${showSearch ? 'active' : ''}`}
+                            title="Tìm kiếm tin nhắn"
+                            onClick={handleToggleSearch}
+                        >
                             <Search size={20} />
                         </button>
                         <button
@@ -319,6 +357,64 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
                         </button>
                     </div>
                 </header>
+
+                {showSearch && (
+                    <div className="chat-search-bar">
+                        <Search size={16} />
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setMatchIndex(0);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleStepMatch(e.shiftKey ? -1 : 1);
+                                } else if (e.key === 'Escape') {
+                                    handleToggleSearch();
+                                }
+                            }}
+                            placeholder="Tìm tin nhắn trong cuộc trò chuyện..."
+                            className="chat-search-input"
+                        />
+                        {normalizedQuery && (
+                            <span className="chat-search-count">
+                                {matchedMessages.length > 0
+                                    ? `${(matchIndex % matchedMessages.length) + 1}/${matchedMessages.length}`
+                                    : '0/0'}
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            className="chat-icon-btn-simple"
+                            title="Tin nhắn trước"
+                            disabled={matchedMessages.length === 0}
+                            onClick={() => handleStepMatch(-1)}
+                        >
+                            <ChevronUp size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            className="chat-icon-btn-simple"
+                            title="Tin nhắn tiếp theo"
+                            disabled={matchedMessages.length === 0}
+                            onClick={() => handleStepMatch(1)}
+                        >
+                            <ChevronDown size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            className="chat-icon-btn-simple"
+                            title="Đóng tìm kiếm"
+                            onClick={handleToggleSearch}
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
 
                 <div className="chat-messages" ref={messagesRef} style={{ display: 'block' }}>
                     {loadingMessages && messages.length === 0 && (
@@ -332,9 +428,29 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
 
                     {!loadingMessages && !messagesError && messages.length === 0 && renderEmptyChat()}
 
-                    {messages.map((msg) => (
-                        <MessageBubble key={msg.id} message={msg} />
-                    ))}
+                    {messages.map((msg) => {
+                        const isMatched =
+                            !!normalizedQuery &&
+                            (msg.text.toLowerCase().includes(normalizedQuery) ||
+                                msg.name.toLowerCase().includes(normalizedQuery));
+                        const isCurrentMatch = activeMatch?.id === msg.id;
+
+                        return (
+                            <div
+                                key={msg.id}
+                                data-msg-id={msg.id}
+                                className={
+                                    isCurrentMatch
+                                        ? 'chat-msg-match active'
+                                        : isMatched
+                                            ? 'chat-msg-match'
+                                            : undefined
+                                }
+                            >
+                                <MessageBubble message={msg} />
+                            </div>
+                        );
+                    })}
 
                     <div ref={messagesEndRef} />
                 </div>

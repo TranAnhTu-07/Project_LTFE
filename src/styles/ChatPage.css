@@ -743,7 +743,7 @@ html, body, #root{
     color: var(--muted);
     font-size: 14px;
 }
-/* ================= LOADING ================= */
+/* LOADING */
 
 .chat-loading {
     min-height: 100%;
@@ -779,7 +779,7 @@ html, body, #root{
     }
 }
 
-/* ================= EMPTY CHAT ================= */
+/* EMPTY CHAT */
 
 .chat-welcome {
     min-height: 100%;
@@ -858,7 +858,7 @@ html, body, #root{
     margin: 5px 0;
 }
 
-/* ================= LOAD MORE ================= */
+/* LOAD MORE */
 
 .load-more-btn {
     display: flex;
@@ -887,4 +887,39 @@ html, body, #root{
     color: #ef4444;
     text-align: center;
     padding: 10px;
+}
+
+/* SEARCH CHAT */
+
+.chat-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--accent-bg);
+}
+
+.chat-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    font-size: 14px;
+}
+
+.chat-search-count {
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.chat-msg-match {
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.chat-msg-match.active {
+    background-color: rgba(99, 102, 241, 0.16);
 }
