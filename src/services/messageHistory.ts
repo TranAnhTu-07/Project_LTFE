@@ -34,13 +34,34 @@ export async function fetchAllMessages(
                     ? roomData.chatMess
                     : []
             batch = rawBatch
+
             const rawUsers = roomData?.userList ?? roomData?.user
-            if (page === 1 && Array.isArray(rawUsers)) {
-                members = rawUsers.map((u, idx) => ({
-                    id: String(u.id ?? idx),
-                    name: String(u.name ?? 'Thành viên'),
-                    online: true,
-                }))
+            const roomRecord = roomData as unknown as Record<string, unknown> | undefined
+            const ownerName = typeof roomRecord?.own === 'string' ? roomRecord.own : undefined
+
+            if (page === 1 && (Array.isArray(rawUsers) || ownerName)) {
+                const list: Member[] = Array.isArray(rawUsers)
+                    ? rawUsers.map((u, idx) => {
+                        const name = String(u.name ?? 'Thành viên')
+                        return {
+                            id: String(u.id ?? idx),
+                            name,
+                            online: true,
+                            role: ownerName && name === ownerName ? 'admin' : undefined,
+                        }
+                    })
+                    : []
+
+                if (ownerName && !list.some((m) => m.name === ownerName)) {
+                    list.unshift({
+                        id: `owner-${ownerName}`,
+                        name: ownerName,
+                        online: true,
+                        role: 'admin',
+                    })
+                }
+
+                members = list
             }
         } else {
             const peopleMsgs: ChatMessage[] = await getPeopleMessages(targetName, page)

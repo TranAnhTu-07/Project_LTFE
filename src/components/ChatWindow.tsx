@@ -17,6 +17,7 @@ type ChatWindowProps = {
 function extractRoomMembers(data: unknown): Member[] | undefined {
     if (!data || typeof data !== 'object') return undefined;
     const raw = data as Record<string, unknown>;
+    const ownerName = typeof raw.own === 'string' ? raw.own : undefined;
     const list = Array.isArray(raw.userList)
         ? raw.userList
         : Array.isArray(raw.user)
@@ -27,16 +28,36 @@ function extractRoomMembers(data: unknown): Member[] | undefined {
                     ? raw.members
                     : null;
 
-    if (!list) return undefined;
-
-    return list.map((item, idx) => {
+    if (!list && !ownerName) return undefined;
+    // return list.map((item, idx) => {
+    //     const u = (item ?? {}) as Record<string, unknown>;
+    //     return {
+    //         id: String(u.id ?? u._id ?? idx),
+    //         name: String(u.name ?? u.username ?? 'Thành viên'),
+    //         online: true,
+    //     };
+    // });
+    const members: Member[] = (list ?? []).map((item, idx) => {
         const u = (item ?? {}) as Record<string, unknown>;
+        const name = String(u.name ?? u.username ?? 'Thành viên');
         return {
             id: String(u.id ?? u._id ?? idx),
-            name: String(u.name ?? u.username ?? 'Thành viên'),
+            name,
             online: true,
+            role: ownerName && name === ownerName ? 'admin' : undefined,
         };
     });
+
+    if (ownerName && !members.some((m) => m.name === ownerName)) {
+        members.unshift({
+            id: `owner-${ownerName}`,
+            name: ownerName,
+            online: true,
+            role: 'admin',
+        });
+    }
+
+    return members;
 }
 
 export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowProps) {

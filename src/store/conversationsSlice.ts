@@ -187,6 +187,9 @@ const slice = createSlice({
                 }
             }
         },
+        resetConversations() {
+            return initialState
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -215,7 +218,7 @@ const slice = createSlice({
 
                 const conv = state.list.find((c) => c.id === convId)
                 if (conv) {
-                    if (members) {
+                    if (members && members.length > 0) {
                         conv.members = members
                     }
                     const latest = messages[messages.length - 1]
@@ -235,7 +238,7 @@ const slice = createSlice({
     },
 })
 
-export const { setActive, addConversation, removeConversation, appendMessage, setConversationMembers, setConversationMessages } = slice.actions
+export const { setActive, addConversation, removeConversation, appendMessage, setConversationMembers, setConversationMessages, resetConversations } = slice.actions
 export default slice.reducer
 export const selectActive = (s: RootState) =>
     s.conversations.list.find((c) => c.id === s.conversations.activeId) ?? null

@@ -6,8 +6,8 @@ import type { Conversation } from '../types'
 import type { AppDispatch, RootState } from '../store'
 import { fetchConversations } from '../store/conversationsSlice'
 import { conversationId, formatTime, nowActionTime } from '../utils/conversation'
-import CreateRoomModal from './CreateRoomModal'
-import { createRoom, checkExist } from '../api/chat'
+import CreateRoomModal, {type ModalMode} from './CreateRoomModal'
+import {createRoom, checkExist, joinRoom} from '../api/chat'
 
 const tabs = ['Tất cả', 'Chưa đọc', 'Nhóm', 'Trực tiếp']
 
@@ -86,9 +86,11 @@ export function ConversationList({ activeId, onSelect, onCreate }: Props) {
     const pinned = filtered.filter((c) => c.pinned)
     const others = filtered.filter((c) => !c.pinned)
 
-    async function handleCreate(name: string, isRoom: boolean) {
-        if (isRoom) {
+    async function handleCreate(name: string, mode: ModalMode) {
+        if (mode === 'create') {
             await createRoom(name)
+        } else if (mode === 'join') {
+            await joinRoom(name)
         } else {
             if (name === localStorage.getItem('user')) {
                 throw new Error('Bạn không thể nhắn tin cho chính mình')
@@ -101,8 +103,9 @@ export function ConversationList({ activeId, onSelect, onCreate }: Props) {
 
         const actionTime = nowActionTime()
         let conv: Conversation
+        const me = localStorage.getItem('user') || 'Bạn'
 
-        if (isRoom) {
+        if (mode === 'create') {
             conv = {
                 id: conversationId(1, name),
                 name,
@@ -110,7 +113,16 @@ export function ConversationList({ activeId, onSelect, onCreate }: Props) {
                 time: formatTime(actionTime),
                 lastMessage: 'Phòng vừa được tạo',
                 type: 'room',
-                members: [{ id: 'me', name: 'Bạn', online: true, role: 'admin' }],
+                members: [{ id: 'me', name: me, online: true, role: 'admin' }],
+            }
+        } else if (mode === 'join') {
+            conv = {
+                id: conversationId(1, name),
+                name,
+                actionTime,
+                time: formatTime(actionTime),
+                lastMessage: 'Đã tham gia phòng',
+                type: 'room',
             }
         } else {
             conv = {
