@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react';
-import { Search, MoreVertical, Send, Hash, Users, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, MoreVertical, Send, Hash, Users, X, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import MessageBubble, { type Message } from './MessageBubble';
 import type { ChatMessage, Conversation, Member } from '../types';
@@ -12,6 +12,7 @@ import {isRoomConversation, nowActionTime} from '../utils/conversation';
 type ChatWindowProps = {
     conversation: Conversation | null;
     onToggleInfo?: () => void;
+    onBackMobile?: () => void;
 };
 
 function extractRoomMembers(data: unknown): Member[] | undefined {
@@ -60,7 +61,7 @@ function extractRoomMembers(data: unknown): Member[] | undefined {
     return members;
 }
 
-export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowProps) {
+export default function ChatWindow({ conversation, onToggleInfo, onBackMobile }: ChatWindowProps) {
     const dispatch = useDispatch<AppDispatch>();
     const { showToast } = useToast();
 
@@ -358,6 +359,16 @@ export default function ChatWindow({ conversation, onToggleInfo }: ChatWindowPro
             <div className="chat-window-inner">
                 <header className="chat-header">
                     <div className="chat-header-info">
+                        {onBackMobile && (
+                            <button
+                                type="button"
+                                className="chat-icon-btn-simple mobile-back-btn"
+                                title="Danh sách hội thoại"
+                                onClick={onBackMobile}
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
+                        )}
                         <h2>{liveConversation.name}</h2>
                         <span className="chat-header-status">{status}</span>
                     </div>

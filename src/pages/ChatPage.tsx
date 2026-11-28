@@ -21,9 +21,15 @@ import { ensureLogin } from '../api/auth.ts'
 import {  outRoom, onChatMessage, onChatError } from '../api/chat.ts'
 import { useToast } from '../context/ToastContext'
 import {nowActionTime} from "../utils/conversation.ts";
+import { X } from 'lucide-react'
 
 export default function ChatPage() {
-    const [showInfo, setShowInfo] = useState(true)
+    // const [showInfo, setShowInfo] = useState(true)
+    // mặc định mở panel bên phải khi mở chat trên máy tính với màn hình lớn hơn 1024px
+    const [showInfo, setShowInfo] = useState(() => typeof window !== 'undefined' ? window.innerWidth > 1024 : true)
+
+    const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+
     const [isAuthReady, setIsAuthReady] = useState(false)
 
     const navigate = useNavigate()
@@ -76,12 +82,15 @@ export default function ChatPage() {
 
     function handleSelectConversation(id: string) {
         dispatch(setActive(id))
+        setMobileView('chat')
     }
 
     async function handleCreate(conv: Conversation) {
         try {
             // await createRoom(room.name)
             dispatch(addConversation(conv))
+            dispatch(setActive(conv.id))
+            setMobileView('chat')
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Tạo phòng thất bại'
             showToast(msg, 'error')
@@ -94,6 +103,7 @@ export default function ChatPage() {
                 await outRoom(conv.name)
             }
             dispatch(removeConversation(conv.id))
+            setMobileView('list')
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Không thể rời cuộc trò chuyện'
             showToast(msg, 'error')
@@ -101,8 +111,14 @@ export default function ChatPage() {
     }
 
     return (
-        <div className={`chat-page ${!showInfo ? 'panel-hidden' : ''}`}>
-            <Sidebar view={view} onChange={setView} />
+        <div className={`chat-page ${!showInfo ? 'panel-hidden' : ''} mobile-${mobileView}`}>
+            <Sidebar
+                view={view}
+                onChange={(nextView) => {
+                    setView(nextView)
+                    if (nextView === 'chat') setMobileView('list')
+                }}
+            />
 
             {view === 'chat' ? (
                 <>
@@ -114,10 +130,33 @@ export default function ChatPage() {
                     <ChatWindow
                         key={active?.id ?? 'empty'}
                         conversation={active}
-                        onToggleInfo={() => setShowInfo(!showInfo)}
+                        onToggleInfo={() => setShowInfo((prev) => !prev)}
+                        onBackMobile={() => setMobileView('list')}
                     />
-                    {showInfo && active && (
-                        <InfoPanel conversation={active} onLeave={() => handleLeave(active)} />
+                    {active && (
+                        <>
+                            <div
+                                className={`info-panel-backdrop ${showInfo ? 'open' : ''}`}
+                                onClick={() => setShowInfo(false)}
+                            />
+                            <div className={`info-panel-drawer ${showInfo ? 'open' : ''}`}>
+                                <button
+                                    type="button"
+                                    className="info-panel-close-btn"
+                                    title="Đóng thông tin"
+                                    onClick={() => setShowInfo(false)}
+                                >
+                                    <X size={18} />
+                                </button>
+                                <InfoPanel
+                                    conversation={active}
+                                    onLeave={() => {
+                                        handleLeave(active)
+                                        setShowInfo(false)
+                                    }}
+                                />
+                            </div>
+                        </>
                     )}
                 </>
             ) : (
