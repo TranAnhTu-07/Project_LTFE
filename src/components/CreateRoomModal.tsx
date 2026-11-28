@@ -2,22 +2,23 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
 import '../styles/Modal.css'
 
+export type ModalMode = 'direct' | 'create' | 'join'
+
 type Props = {
     onClose: () => void
-    onSubmit: (name: string,isRoom: boolean) => Promise<void> | void
+    onSubmit: (name: string, mode: ModalMode) => Promise<void> | void
 }
 
 export default function CreateRoomModal({ onClose, onSubmit }: Props) {
     const [name, setName] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [mode, setMode] = useState<ModalMode>('direct')
     const inputRef = useRef<HTMLInputElement>(null)
-    const [isRoom, setIsRoom] = useState(false)
 
     useEffect(() => {
         inputRef.current?.focus()
     }, [])
-
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -26,6 +27,8 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
     }, [onClose])
+
+    const isRoom = mode !== 'direct'
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()
@@ -47,12 +50,15 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
         setLoading(true)
         setError('')
         try {
-            await onSubmit(value, isRoom)
+            await onSubmit(value, mode)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Lỗi')
             setLoading(false)
         }
     }
+
+    const submitLabel =
+        mode === 'create' ? 'Tạo phòng' : mode === 'join' ? 'Vào phòng' : 'Nhắn tin'
 
     return (
         <div
@@ -65,7 +71,7 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
                 <div className="modal-header">
                     <h3>Cuộc trò chuyện mới</h3>
                     <button type="button" className="modal-close" onClick={onClose}>
-                        <X size={18}/>
+                        <X size={18} />
                     </button>
                 </div>
 
@@ -80,22 +86,34 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
                     onChange={(e) => {
                         setName(e.target.value)
                         setError('')
-                    }
-                }
+                    }}
                 />
                 {error && <p className="modal-error">{error}</p>}
 
                 <label className="modal-check">
                     <input
                         type="checkbox"
-                        checked={isRoom}
+                        checked={mode === 'create'}
                         onChange={(e) => {
-                            setIsRoom(e.target.checked)
+                            setMode(e.target.checked ? 'create' : 'direct')
                             setError('')
                         }}
                         disabled={loading}
                     />
-                    <span>Phòng chat</span>
+                    <span>Tạo phòng</span>
+                </label>
+
+                <label className="modal-check">
+                    <input
+                        type="checkbox"
+                        checked={mode === 'join'}
+                        onChange={(e) => {
+                            setMode(e.target.checked ? 'join' : 'direct')
+                            setError('')
+                        }}
+                        disabled={loading}
+                    />
+                    <span>Vào phòng</span>
                 </label>
 
                 <div className="modal-actions">
@@ -103,7 +121,7 @@ export default function CreateRoomModal({ onClose, onSubmit }: Props) {
                         Hủy
                     </button>
                     <button type="submit" className="modal-btn primary" disabled={loading}>
-                        {loading ? 'Đang xử lý...' : isRoom ? 'Tạo phòng' : 'Nhắn tin'}
+                        {loading ? 'Đang xử lý...' : submitLabel}
                     </button>
                 </div>
             </form>

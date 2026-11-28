@@ -1,6 +1,8 @@
 import { MessageSquare, Users, LogOut, type LucideIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logout } from '../api/auth.ts'
+import {resetConversations} from "../store/conversationsSlice.ts";
+import {useDispatch} from "react-redux";
 
 export type SidebarView = 'chat' | 'contacts'
 
@@ -16,14 +18,24 @@ type Props = {
 
 export default function Sidebar({ view, onChange }: Props) {
     const navigate = useNavigate()
+    const dispatch = useDispatch()
 
     async function handleLogout() {
         try {
             await logout()
         } finally {
+            dispatch(resetConversations())
             navigate('/login', { replace: true })
         }
     }
+
+    // async function handleLogout() {
+    //     try {
+    //         await logout()
+    //     } finally {
+    //         navigate('/login', { replace: true })
+    //     }
+    // }
 
     return (
         <aside className="chat-sidebar">
